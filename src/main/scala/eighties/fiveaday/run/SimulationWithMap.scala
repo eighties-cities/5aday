@@ -30,6 +30,7 @@ import eighties.h24.space._
 import eighties.fiveaday.observable
 import eighties.h24.{dynamic, space}
 import eighties.fiveaday.health._
+import eighties.h24.simulation.MoveType
 import eighties.h24.social._
 
 import scala.annotation.tailrec
@@ -111,9 +112,9 @@ object FitWithMap {
         case time :: t =>
           println(Calendar.getInstance.getTime + " simulate day " + day +  ", time slice " + time)
           def moved = moveType match {
-            case Move => dynamic.moveInMoveMatrix(world, locatedCell, time, Individual.stableDestinationsV.get, Individual.locationV, Individual.homeV.get, Individual.socialCategoryV.get, rng)
-            case RandomMove => dynamic.randomMove(world, time, 1.0, Individual.locationV, Individual.stableDestinationsV.get, rng)
-            case NoMove => world
+            case MoveType.Data => dynamic.moveInMoveMatrix(world, locatedCell, time, Individual.stableDestinationsV.get, Individual.locationV, Individual.homeV.get, Individual.socialCategoryV.get, rng)
+            case MoveType.Random => dynamic.randomMove(world, time, 1.0, Individual.locationV, Individual.stableDestinationsV.get, rng)
+            case MoveType.No => world
           }
           val convicted = interchangeConviction(
             moved,
@@ -140,15 +141,15 @@ object FitWithMap {
     val worldInit = generateWorld(worldFeature.individualFeatures, buildIndividual, Individual.locationV, Individual.homeV, rng)
 
     val populationWithMoves = moveType match {
-      case Move =>
+      case MoveType.Data =>
         val fixedDay =  assignRandomDayLocation(worldInit, locatedCell, Individual.stableDestinationsV, Individual.locationV.get, Individual.homeV.get, Individual.socialCategoryV.get, rng)
         assignFixNightLocation(
           fixedDay,
           Individual.stableDestinationsV,
           Individual.homeV.get
         )
-      case RandomMove => assignFixNightLocation(worldInit, Individual.stableDestinationsV, Individual.homeV.get)
-      case NoMove => assignFixNightLocation(worldInit, Individual.stableDestinationsV, Individual.homeV.get)
+      case MoveType.Random => assignFixNightLocation(worldInit, Individual.stableDestinationsV, Individual.homeV.get)
+      case MoveType.No => assignFixNightLocation(worldInit, Individual.stableDestinationsV, Individual.homeV.get)
     }
 
     util.writeState(populationWithMoves, File(outputPath.toURI) / "init.csv")
@@ -193,11 +194,11 @@ object SimulationWithMapApp extends App {
     val distributionConstraints = dataDirectory / "initialisation_distribution_per_cat_2002_2008.csv"
 
     val scenarioMap = Map(
-      (1, (RandomPop, NoMove)),
-      (2, (RandomPop, RandomMove)),
-      (3, (ObservedPop, NoMove)),
-      (4, (ObservedPop, RandomMove)),
-      (5, (ObservedPop, Move))
+      (1, (RandomPop, MoveType.No)),
+      (2, (RandomPop, MoveType.Random)),
+      (3, (ObservedPop, MoveType.No)),
+      (4, (ObservedPop, MoveType.Random)),
+      (5, (ObservedPop, MoveType.Data))
     )
 
     val parameterMap = Map(
@@ -211,9 +212,9 @@ object SimulationWithMapApp extends App {
 
     val (pop, moveType) = scenarioMap(scenario)
     val moveTypeString = moveType match {
-      case Move => "ObservedMove"
-      case RandomMove => "RandomMove"
-      case NoMove => "NoMove"
+      case MoveType.Data => "ObservedMove"
+      case MoveType.Random => "RandomMove"
+      case MoveType.No => "NoMove"
     }
     val popName = pop match {
       case RandomPop => "RandomPop"

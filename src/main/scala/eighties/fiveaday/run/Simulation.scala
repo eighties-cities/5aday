@@ -17,23 +17,18 @@
   */
 package eighties.fiveaday.run
 
-import java.util.Calendar
-
 import better.files._
-import eighties.h24.dynamic.MoveMatrix._
-import eighties.h24.dynamic.{MoveMatrix, _}
 import eighties.h24.generation._
-import eighties.fiveaday.opinion.interchangeConviction
-import eighties.fiveaday.population.Individual
 import eighties.h24.space._
 import eighties.fiveaday.observable
-import eighties.h24.{dynamic, space}
+import eighties.fiveaday.opinion.interchangeConviction
+import eighties.fiveaday.population.Individual
 import eighties.fiveaday.health._
-
-import scala.annotation.tailrec
+import eighties.h24.simulation._
 import scala.util.Random
 
 object Simulation {
+
   def run(
     maxProbaToSwitch: Double,
     constraintsStrength: Double,
@@ -47,79 +42,25 @@ object Simulation {
     moveType: MoveType,
     rng: Random) = {
 
-    println(Calendar.getInstance.getTime + " loading population")
-    def worldFeature = WorldFeature.load(File(population.toURI)) //generatedData / "population.bin")
-
     val healthCategory = generateHealthCategory(File(distributionConstraints.toURI))
     val interactionMap = generateInteractionMap(File(distributionConstraints.toURI))
 
-    println(Calendar.getInstance.getTime + " compute bounding box")
-    val bbox = worldFeature.originalBoundingBox
-
-    lazy val locatedCellCache = collection.mutable.TreeMap[Short, MoveMatrix.Cell]()
-    def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => {
-      def update = MoveMatrix.loadCell(File(moves.toURI), timeSlice, i, j)
-      locatedCellCache.getOrElseUpdate(Location.toIndex((i, j)), update)
-    }
-
-    @tailrec def simulateOneDay(world: space.World[Individual], bb: BoundingBox, timeSlices: List[TimeSlice], locatedCell: LocatedCell, day: Int, slice: Int = 0): World[Individual] = {
-      //println(s"day ${day}, slice ${slice}: " + observable.weightedInequalityRatioBySexAge(world))
-
-      timeSlices match {
-        case Nil => world
-        case time :: t =>
-          //val summary = healthyRatioBySexAge(world).toSeq.sortBy(_._1)
-          //if(slice == 0) println(Calendar.getInstance.getTime + s" simulate day $day, slice $slice, time slice $time, ${fitness(world, day, File(distributionConstraints.toURI))}")
-
-          def moved = moveType match {
-            case Move => dynamic.moveInMoveMatrix(world, locatedCell, time, Individual.stableDestinationsV.get, Individual.locationV, Individual.homeV.get, Individual.socialCategoryV.get, rng)
-            case RandomMove => dynamic.randomMove(world, time, 1.0, Individual.locationV, Individual.stableDestinationsV.get,rng)
-            case NoMove => world
-          }
-
-          def convicted = interchangeConviction(
-            moved,
-            slice,
-            interactionMap,
-            maxProbaToSwitch = maxProbaToSwitch,
-            constraintsStrength = constraintsStrength,
-            inertiaCoefficient = inertiaCoefficient,
-            healthyDietReward = healthyDietReward,
-            interpersonalInfluence = interpersonalInfluence,
-            rng
-          )
-
-          simulateOneDay(convicted, bb, t, locatedCell, day, slice + 1)
-      }
-    }
-
-    @tailrec def simulateAllDays(day: Int, world: World[Individual]): World[Individual] =
-      if(day == days) world
-      else {
-        def newWorld = simulateOneDay(world, bbox, timeSlices.toList, locatedCell, day)
-        simulateAllDays(day + 1, newWorld)
-      }
-
     def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, rng)
-    def world = generateWorld(worldFeature.individualFeatures, buildIndividual, Individual.locationV, Individual.homeV, rng)
 
-    def populationWithMoves = moveType match {
-      case Move =>
-        val fixedDay =  assignRandomDayLocation(world, locatedCell, Individual.stableDestinationsV, Individual.locationV.get, Individual.homeV.get, Individual.socialCategoryV.get, rng)
-        assignFixNightLocation(
-          fixedDay,
-          Individual.stableDestinationsV,
-          Individual.homeV.get
-        )
-      case RandomMove => assignFixNightLocation(world, Individual.stableDestinationsV, Individual.homeV.get)
-      case NoMove => assignFixNightLocation(world, Individual.stableDestinationsV, Individual.homeV.get)
-    }
+    def exchange(moved: World[Individual], slice: Int, rng: Random) = interchangeConviction(
+      moved,
+      slice,
+      interactionMap,
+      maxProbaToSwitch = maxProbaToSwitch,
+      constraintsStrength = constraintsStrength,
+      inertiaCoefficient = inertiaCoefficient,
+      healthyDietReward = healthyDietReward,
+      interpersonalInfluence = interpersonalInfluence,
+      rng
+    )
 
-    println(Calendar.getInstance.getTime + " run simulation")
-
-    simulateAllDays(0, populationWithMoves)
+    simulate(days, population, moves, moveType, buildIndividual, exchange, Individual.stableDestinationsV, Individual.locationV, Individual.homeV, Individual.socialCategoryV.get, rng)
   }
-
 
 }
 
@@ -197,7 +138,7 @@ object SimulationApp extends App {
       population = worldFeatures.toJava,
       moves = moves.toJava,
       distributionConstraints = distributionConstraints.toJava,
-      moveType = RandomMove,
+      moveType = MoveType.Random,
       rng = rng
     )
 
