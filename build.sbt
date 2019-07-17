@@ -7,8 +7,6 @@ version := "1.0-SNAPSHOT"
 
 scalaVersion := "2.12.8"
 
-val h24Version = "1.0-SNAPSHOT"
-
 //val monocleVersion = "1.5.0-cats"
 val monocleVersion = "1.5.0"
 
@@ -26,7 +24,7 @@ resolvers ++= Seq(
 
 
 libraryDependencies ++= Seq (
-  "eighties" %% "h24" % h24Version,
+  "eighties" %% "h24" % "1.0-SNAPSHOT",
   "com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
   "com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
   "com.github.julien-truffaut"  %%  "monocle-macro"   % monocleVersion,
