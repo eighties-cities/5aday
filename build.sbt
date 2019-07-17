@@ -26,7 +26,7 @@ libraryDependencies ++= Seq (
   "com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
   "com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
   "com.github.julien-truffaut"  %%  "monocle-macro"   % monocleVersion,
-  "org.geotools" % "geotools" % geotoolsVersion,
+//  "org.geotools" % "geotools" % geotoolsVersion,
   "org.geotools" % "gt-referencing" % geotoolsVersion,
   "org.geotools" % "gt-shapefile" % geotoolsVersion,
   "org.geotools" % "gt-epsg-wkt" % geotoolsVersion,
