@@ -10,9 +10,7 @@ scalaVersion := "2.12.8"
 //val monocleVersion = "1.5.0-cats"
 val monocleVersion = "1.5.0"
 
-val geotoolsVersion = "19.0"
-
-val jtsVersion = "1.13"
+val geotoolsVersion = "21.0"
 
 val breezeVersion = "0.13.2"
 
@@ -37,7 +35,6 @@ libraryDependencies ++= Seq (
   "org.geotools" % "gt-image" % geotoolsVersion,
   "org.geotools" % "gt-coverage" % geotoolsVersion,
   "org.geotools" % "gt-geojson" % geotoolsVersion,
-  "com.vividsolutions" % "jts" % jtsVersion,
   "com.github.tototoshi" %% "scala-csv" % "1.3.4",
   "org.apache.commons" % "commons-compress" % "1.11",
   "org.apache.commons" % "commons-math3" % "3.6.1",
@@ -68,11 +65,10 @@ OsgiKeys.exportPackage := Seq("eighties.*;-split-package:=merge-first")
 
 OsgiKeys.importPackage := Seq("*;resolution:=optional")
 
-OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*")
+OsgiKeys.privatePackage := Seq("!scala.*,!java.*,*")
 
-//OsgiKeys.embeddedJars := (Keys.externalDependencyClasspath in Compile).value map (_.data) filter (_.name.startsWith("gt-"))
-
-OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))""""
+//OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))""""
+OsgiKeys.requireCapability := """osgi.ee; osgi.ee="JavaSE";version:List="1.8,1.9""""
 
 //excludeFilter in unmanagedSources := "OpinionMapper.scala" || "MapPopulation.scala" || "worldMapper.scala"
 
@@ -86,3 +82,5 @@ OsgiKeys.additionalHeaders :=  Map(
   "Implementation-Version" -> "Impl Version",
   "Implementation-Vendor" -> "Eighties"
 )
+
+OsgiKeys.embeddedJars := (Keys.externalDependencyClasspath in Compile).value map (_.data) filter (f=> (f.getName startsWith "gt-"))

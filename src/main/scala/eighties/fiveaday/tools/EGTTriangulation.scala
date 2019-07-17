@@ -20,8 +20,8 @@ package eighties.fiveaday.tools
 import java.io.{BufferedInputStream, FileInputStream}
 
 import better.files._
-import com.vividsolutions.jts.geom.{Coordinate, GeometryCollection, GeometryFactory}
-import com.vividsolutions.jts.triangulate.ConformingDelaunayTriangulationBuilder
+import org.locationtech.jts.geom.{Coordinate, GeometryCollection, GeometryFactory}
+import org.locationtech.jts.triangulate.ConformingDelaunayTriangulationBuilder
 import org.geotools.data.shapefile.ShapefileDataStoreFactory
 import org.geotools.data.{DataUtilities, Transaction}
 import com.github.tototoshi.csv.{CSVFormat, CSVReader, DefaultCSVFormat}

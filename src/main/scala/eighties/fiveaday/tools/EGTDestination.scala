@@ -1,7 +1,7 @@
 package eighties.fiveaday.tools
 
 import better.files.File
-import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
+import org.locationtech.jts.geom.{Coordinate, GeometryFactory}
 import eighties.h24.dynamic.MoveMatrix
 import eighties.h24.dynamic.MoveMatrix.TimeSlices
 import eighties.h24.generation.WorldFeature

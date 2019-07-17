@@ -3,8 +3,8 @@ package eighties.fiveaday.tools
 import java.util.Calendar
 
 import better.files.File
-import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, MultiPolygon}
-import com.vividsolutions.jts.index.strtree.STRtree
+import org.locationtech.jts.geom.{Coordinate, GeometryFactory, MultiPolygon}
+import org.locationtech.jts.index.strtree.STRtree
 import eighties.fiveaday.population.{ChangeConstraints, HealthCategory, Healthy, Individual}
 import eighties.h24.generation.{IndividualFeature, PolygonSampler, WorldFeature}
 import eighties.h24.social.AggregatedSocialCategory

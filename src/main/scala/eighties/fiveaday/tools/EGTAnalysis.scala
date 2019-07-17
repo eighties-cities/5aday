@@ -21,7 +21,7 @@ import java.io.{BufferedInputStream, FileInputStream}
 
 import better.files._
 import com.github.tototoshi.csv.{CSVFormat, CSVReader, DefaultCSVFormat}
-import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
+import org.locationtech.jts.geom.{Coordinate, GeometryFactory}
 import org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream
 import org.apache.commons.math3.random.JDKRandomGenerator
 import org.geotools.data.shapefile.ShapefileDataStoreFactory
