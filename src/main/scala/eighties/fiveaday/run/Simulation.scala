@@ -187,7 +187,7 @@ object SimulationApp extends App {
           population = worldFeatures,
           moves = moves,
           distributionConstraints = distributionConstraints,
-          moveType = MoveType.Random,
+          moveType = MoveType.Data,
           rng = rng
         )
 

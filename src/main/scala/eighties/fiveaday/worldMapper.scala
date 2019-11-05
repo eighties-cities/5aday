@@ -52,26 +52,27 @@ object worldMapper {
     format.getWriter(file.toJava).write(coverage, null)
   }
   def mapGray(world: space.World[Individual],
+              originalBoundingBox: BoundingBox,
               boundingBox: BoundingBox,
               file: File,
               getValue: Individual => Double,
               atHome: Boolean = true,
               textLeft: String= "",
               textRight: String= "",
-              filter: (Int => Boolean) = _=>true,
-              aggregator: (Array[Double] => Double) = v => v.sum / v.length,
+              filter: Int => Boolean = _=>true,
+              aggregator: Array[Double] => Double = v => v.sum / v.length,
               minValue: Double = 0.0,
               maxValue: Double = 1.0,
               rescale: Boolean = true,
               fraction: Int = 4,
               cellSize: Int = 1000,
               crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
-    val minX = boundingBox.minI
-    val minY = boundingBox.minJ
+//    val minX = originalBoundingBox.minI
+//    val minY = originalBoundingBox.minJ
     val width = boundingBox.sideI
     val height = boundingBox.sideJ
-    val maxX = minX + width
-    val maxY = minY + height
+//    val maxX = minX + width
+//    val maxY = minY + height
     val rangeValues = maxValue - minValue
     val pixelSize = 10
     val bufferedImage = new BufferedImage(width*pixelSize, height*pixelSize, BufferedImage.TYPE_INT_ARGB)
@@ -118,7 +119,7 @@ object worldMapper {
         g.drawString(s"${(minValue + d) * rangeValues}", (width - 14) * pixelSize, h + shift)
       }
     }
-    val referencedEnvelope = new ReferencedEnvelope(minX * cellSize, maxX * cellSize, minY * cellSize, maxY * cellSize, crs)
+    val referencedEnvelope = new ReferencedEnvelope(originalBoundingBox.minI, originalBoundingBox.maxI, originalBoundingBox.minJ, originalBoundingBox.maxJ, crs)
     val factory = new GridCoverageFactory
     val coverage = factory.create("GridCoverage", bufferedImage, referencedEnvelope)
     file.parent.createDirectories
@@ -127,9 +128,9 @@ object worldMapper {
   def mapColorRGB(world: space.World[Individual],
                   boundingBox: BoundingBox,
                   file: File,
-                  getValue: (Individual => Double),
-                  filter: (Int => Boolean) = _=>true,
-                  aggregator: (Array[Double] => Double) = v => v.sum / v.length,
+                  getValue: Individual => Double,
+                  filter: Int => Boolean = _=>true,
+                  aggregator: Array[Double] => Double = v => v.sum / v.length,
                   minValue: Double = 0.0,
                   maxValue: Double = 1.0,
                   cellSize: Int = 1000,
@@ -198,12 +199,12 @@ object worldMapper {
   def mapColorHSV(world: space.World[Individual],
                   boundingBox: BoundingBox,
                   file: File,
-                  getValue: (Individual => Double),
+                  getValue: Individual => Double,
                   atHome: Boolean = true,
                   textLeft: String= "",
                   textRight: String= "",
-                  filter: (Int => Boolean) = _=>true,
-                  aggregator: (Array[Double] => Double) = v => v.sum / v.length,
+                  filter: Int => Boolean = _=>true,
+                  aggregator: Array[Double] => Double = v => v.sum / v.length,
                   minValue: Double = 0.0,
                   maxValue: Double = 1.0,
                   cellSize: Int = 1000,
@@ -258,7 +259,7 @@ object worldMapper {
         g.setColor(c)
         g.fillRect((width - 20) * pixelSize, h, shift, shift)
         g.setColor(Color.black)
-        g.drawString(s"${d}", (width - 14) * pixelSize, h + shift)
+        g.drawString(s"$d", (width - 14) * pixelSize, h + shift)
       }
     }
     val referencedEnvelope = new ReferencedEnvelope(minX * cellSize, maxX * cellSize, minY * cellSize, maxY * cellSize, crs)
