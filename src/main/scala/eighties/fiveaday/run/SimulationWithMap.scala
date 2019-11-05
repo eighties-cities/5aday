@@ -248,7 +248,7 @@ object SimulationWithMapApp extends App {
     )
   }
 //  val scenario = 1
-  val parameterName = "ose"
+  val parameterName = "duo_0703"
   val seed = 42
 //  SimulationWithMapApp(5, "calibration", seed)
 //  SimulationWithMapApp(5, parameterName, seed)
