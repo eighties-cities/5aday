@@ -52,15 +52,16 @@ object FitWithMap {
     rng: Random) = {
 
     println(Calendar.getInstance.getTime + " loading population")
-    def worldFeature = WorldFeature.load(File(population.toURI)) //generatedData / "population.bin")
+    def worldFeature = WorldFeature.load(population) //generatedData / "population.bin")
 
-    val healthCategory = generateHealthCategory(File(distributionConstraints.toURI))
-    val interactionMap = generateInteractionMap(File(distributionConstraints.toURI))
+    val healthCategory = generateHealthCategory(distributionConstraints)
+    val interactionMap = generateInteractionMap(distributionConstraints)
 
     println(Calendar.getInstance.getTime + " compute bounding box")
     val bbox = worldFeature.originalBoundingBox
 
-    def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => MoveMatrix.loadCell(File(moves.toURI), timeSlice, i, j)
+    val moveMatrix = MoveMatrix.load(moves)
+    def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => moveMatrix.get(((i, j), timeSlice))
 
     /*
     def mapOpinion(world: World, bb: BoundingBox, file: File, atHome: Boolean = true) = {

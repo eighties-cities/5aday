@@ -19,7 +19,7 @@ object ComputeSocialInequality extends App {
 //
 //  def worldFeature = WorldFeature.load(population)
 
-  val healthCategory = generateHealthCategory(distributionConstraints)
+  val healthCategory = generateHealthCategory(distributionConstraints.toJava)
 //  val seed = 42
 //  val rng = new Random(seed)
 //

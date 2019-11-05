@@ -15,13 +15,13 @@ object MapPopulation extends App {
   val rng = new Random(42)
   val popFile = "population.bin"
   val result = "results"
-  def features = WorldFeature.load(File("data") / popFile)
+  def features = WorldFeature.load((File("data") / popFile).toJava)
   println(Calendar.getInstance.getTime + " features")
 
   val dataDirectory = File("../data")
   val distributionConstraints = dataDirectory / "initialisation_distribution_per_cat.csv"
 
-  val healthCategory = generateHealthCategory(distributionConstraints)
+  val healthCategory = generateHealthCategory(distributionConstraints.toJava)
 
   def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
   val world = generateWorld(features.individualFeatures, buildIndividual, Individual.locationV, Individual.homeV, rng)

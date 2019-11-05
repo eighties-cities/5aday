@@ -24,9 +24,9 @@ object ComputeSocialInequalityFromSyntheticPopulation extends App {
   println(Calendar.getInstance.getTime + " loading population")
   val population = generatedData / "population.bin"
 
-  def worldFeature = WorldFeature.load(population)
+  def worldFeature = WorldFeature.load(population.toJava)
 
-  val healthCategory = generateHealthCategory(distributionConstraints)
+  val healthCategory = generateHealthCategory(distributionConstraints.toJava)
   val seed = 42
   val rng = new Random(seed)
 
