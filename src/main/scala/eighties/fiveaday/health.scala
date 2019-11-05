@@ -17,7 +17,7 @@ package eighties.fiveaday
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import better.files.File
+import better.files._
 import com.github.tototoshi.csv.{CSVParser, defaultCSVFormat}
 import eighties.fiveaday.population.{ChangeConstraints, HealthCategory, Healthy, Unhealthy}
 import eighties.h24.generation.RasterVariate
@@ -56,7 +56,7 @@ object health {
 
   }
 
-  def generateHealthCategory(file: File): (AggregatedSocialCategory, Random) => HealthCategory = {
+  def generateHealthCategory(file: java.io.File): (AggregatedSocialCategory, Random) => HealthCategory = {
     import HealthMatrix._
     val parser = new CSVParser(defaultCSVFormat)
 
@@ -69,10 +69,10 @@ object health {
                         opinionDistributionH: Vector[Double],
                         opinionDistributionU: Vector[Double])
 
-    val header = headers(file)
+    val header = headers(file.toScala)
 
     val stats =
-      file.lines.drop(1).flatMap(l => parser.parseLine(l)).map {
+      file.toScala.lines.drop(1).flatMap(l => parser.parseLine(l)).map {
         cs =>
           val indexH1 = header("opinion_index_Hq1")
           val indexH5 = header("opinion_index_Hq5")
@@ -110,11 +110,11 @@ object health {
                            lunchInteraction: Double,
                            dinnerInteraction: Double)
 
-  def generateInteractionMap(file: File) = {
+  def generateInteractionMap(file: java.io.File) = {
     import HealthMatrix._
-    val header = headers(file)
+    val header = headers(file.toScala)
     val parser = new CSVParser(defaultCSVFormat)
-    file.lines.drop(1).flatMap(l => parser.parseLine(l)).map {
+    file.toScala.lines.drop(1).flatMap(l => parser.parseLine(l)).map {
       cs =>
         AggregatedSocialCategory(sex = sex(cs(header("Sex"))), age = age(cs(header("Age"))), education = education(cs(header("Edu")))) ->
           Interactions(
