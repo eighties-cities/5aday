@@ -119,7 +119,7 @@ object worldMapper {
         g.drawString(s"${(minValue + d) * rangeValues}", (width - 14) * pixelSize, h + shift)
       }
     }
-    val referencedEnvelope = new ReferencedEnvelope(originalBoundingBox.minI, originalBoundingBox.maxI, originalBoundingBox.minJ, originalBoundingBox.maxJ, crs)
+    val referencedEnvelope = new ReferencedEnvelope(originalBoundingBox.minI, originalBoundingBox.maxI+cellSize, originalBoundingBox.minJ, originalBoundingBox.maxJ+cellSize, crs)
     val factory = new GridCoverageFactory
     val coverage = factory.create("GridCoverage", bufferedImage, referencedEnvelope)
     file.parent.createDirectories

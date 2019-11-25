@@ -59,8 +59,11 @@ object FitWithMap {
     val healthCategory = generateHealthCategory(distributionConstraints)
     val interactionMap = generateInteractionMap(distributionConstraints)
 
-    println(Calendar.getInstance.getTime + " compute bounding box")
-    val bbox = worldFeature.originalBoundingBox
+    println(s"${Calendar.getInstance.getTime} compute bounding box")
+    val obbox = worldFeature.originalBoundingBox
+    val bbox = worldFeature.boundingBox
+    println(s"${Calendar.getInstance.getTime} bounding box = ${obbox.minI} ${obbox.minJ} ${obbox.maxI} ${obbox.maxJ} ${obbox.sideI} ${obbox.sideI}")
+    println(s"${Calendar.getInstance.getTime} bounding box = ${bbox.minI} ${bbox.minJ} ${bbox.maxI} ${bbox.maxJ} ${bbox.sideI} ${bbox.sideI}")
 
     val moveMatrix = MoveMatrix.load(moves)
     def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) =>  moveMatrix.get((i, j), timeSlice)
@@ -110,7 +113,7 @@ object FitWithMap {
     parameters << s"$maxProbaToSwitch,$constraintsStrength,$inertiaCoefficient,$healthyDietReward,$interpersonalInfluence"
 
     @scala.annotation.tailrec
-    def simulateOneDay(world: space.World[Individual], bb: BoundingBox, timeSlices: List[TimeSlice], locatedCell: LocatedCell, day: Int, slice: Int = 0): World[Individual] =
+    def simulateOneDay(world: space.World[Individual], obb: BoundingBox, bb: BoundingBox, timeSlices: List[TimeSlice], locatedCell: LocatedCell, day: Int, slice: Int = 0): World[Individual] =
       timeSlices match {
         case Nil => world
         case time :: t =>
@@ -133,12 +136,12 @@ object FitWithMap {
           )
           val soc = observable.weightedInequalityRatioBySexAge(convicted)
           val e = observable.erreygersE(convicted)
-          util.mapHealth(convicted, bb, outputPath.toScala / "home" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", maxValue = 0.5, fraction = 5)
-          util.mapHealth(convicted, bb, outputPath.toScala / "location" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", atHome = false, maxValue = 0.5, fraction = 5)
+          util.mapHealth(convicted, obb, bb, outputPath.toScala / "home" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", maxValue = 0.5, fraction = 5)
+          util.mapHealth(convicted, obb, bb, outputPath.toScala / "location" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", atHome = false, maxValue = 0.5, fraction = 5)
           writeFileByCategory(day, slice, convicted, categories.toJava, soc, e)
           //mapOpinion(convicted, bb, File(outputPath.toURI) / "opinion" / "home" / f"${day}%02d_${slice}.tiff")
           //mapOpinion(convicted, bb, File(outputPath.toURI) / "opinion" / "location" / f"${day}%02d_${slice}.tiff", false)
-          simulateOneDay(convicted, bb, t, locatedCell, day, slice + 1)
+          simulateOneDay(convicted, obb, bb, t, locatedCell, day, slice + 1)
       }
 
     def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, rng)
@@ -167,7 +170,7 @@ object FitWithMap {
     @tailrec def simulateAllDays(day: Int, world: World[Individual]): World[Individual] =
       if(day == days) world
       else {
-        def newWorld = simulateOneDay(world, bbox, timeSlices.toList, locatedCell, day)
+        def newWorld = simulateOneDay(world, obbox, bbox, timeSlices.toList, locatedCell, day)
         simulateAllDays(day + 1, newWorld)
       }
 

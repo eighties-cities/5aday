@@ -193,7 +193,8 @@ object SimulationApp extends App {
 
       println("delta health: " + observable.deltaHealth(world))
       println("social inequality: " + observable.weightedInequalityRatioBySexAge(world))
-    //println("world error: " + World.allIndividuals.getAll(world).count(_.healthy))
+      //println("world error: " + World.allIndividuals.getAll(world).count(_.healthy))
+    case _ =>
   }
 
 }
