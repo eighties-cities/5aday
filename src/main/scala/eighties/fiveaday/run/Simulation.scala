@@ -19,7 +19,6 @@ package eighties.fiveaday.run
 
 import java.io.File
 
-import better.files._
 import eighties.h24.generation._
 import eighties.h24.space._
 import eighties.fiveaday.observable

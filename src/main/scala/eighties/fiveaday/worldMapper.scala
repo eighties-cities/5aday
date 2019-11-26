@@ -53,7 +53,8 @@ object worldMapper {
   }
   def mapGray(world: space.World[Individual],
               originalBoundingBox: BoundingBox,
-              boundingBox: BoundingBox,
+              width: Int,
+              height: Int,
               file: File,
               getValue: Individual => Double,
               atHome: Boolean = true,
@@ -67,38 +68,104 @@ object worldMapper {
               fraction: Int = 4,
               cellSize: Int = 1000,
               crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
-//    val minX = originalBoundingBox.minI
-//    val minY = originalBoundingBox.minJ
-    val width = boundingBox.sideI
-    val height = boundingBox.sideJ
-//    val maxX = minX + width
-//    val maxY = minY + height
+    val index = space.Index.indexIndividuals(world, if (atHome) Individual.homeV.get else Individual.locationV.get)
+    val mappedValues = index.cells.map(_.map(individuals => if (filter(individuals.length) && individuals.nonEmpty) Some(aggregator(individuals.map(getValue))) else None))
+    mapGrayValues(
+      mappedValues,
+      originalBoundingBox,
+      width,
+      height,
+      file,
+      textLeft,
+      textRight,
+      minValue,
+      maxValue,
+      rescale,
+      fraction,
+      cellSize,
+      crs
+    )
+  }
+  def mapGrayDiff(world1: space.World[Individual],world2: space.World[Individual],
+              originalBoundingBox: BoundingBox,
+              width: Int,
+              height: Int,
+              file: File,
+              getValue: Individual => Double,
+              atHome: Boolean = true,
+              textLeft: String= "",
+              textRight: String= "",
+              filter: Int => Boolean = _=>true,
+              aggregator: Array[Double] => Double = v => v.sum / v.length,
+              minValue: Double = -1.0,
+              maxValue: Double = 1.0,
+              rescale: Boolean = true,
+              fraction: Int = 4,
+              cellSize: Int = 1000,
+              crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
+    val index1 = space.Index.indexIndividuals(world1, if (atHome) Individual.homeV.get else Individual.locationV.get)
+    val mappedValues1 = index1.cells.map(_.map(individuals => if (filter(individuals.length) && individuals.nonEmpty) Some(aggregator(individuals.map(getValue))) else None))
+    val index2 = space.Index.indexIndividuals(world2, if (atHome) Individual.homeV.get else Individual.locationV.get)
+    val mappedValues2 = index2.cells.map(_.map(individuals => if (filter(individuals.length) && individuals.nonEmpty) Some(aggregator(individuals.map(getValue))) else None))
+    val mappedValuesDiff = mappedValues1.zipWithIndex.map {
+      case (array1, ind1) => array1.zipWithIndex.map {
+        case (array2, ind2) => (array2, mappedValues2(ind1)(ind2)) match {
+            case (Some(v1), Some(v2)) => Some(v2 - v1)
+            case _ => None
+          }
+      }
+    }
+    mapGrayValues(
+      mappedValuesDiff,
+      originalBoundingBox,
+      width,
+      height,
+      file,
+      textLeft,
+      textRight,
+      minValue,
+      maxValue,
+      rescale,
+      fraction,
+      cellSize,
+      crs
+    )
+  }
+  def mapGrayValues(
+              values: Array[Array[Option[Double]]],
+              originalBoundingBox: BoundingBox,
+              width: Int,
+              height: Int,
+              file: File,
+              textLeft: String= "",
+              textRight: String= "",
+              minValue: Double = 0.0,
+              maxValue: Double = 1.0,
+              rescale: Boolean = true,
+              fraction: Int = 4,
+              cellSize: Int = 1000,
+              crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
     val rangeValues = maxValue - minValue
     val pixelSize = 10
     val bufferedImage = new BufferedImage(width*pixelSize, height*pixelSize, BufferedImage.TYPE_INT_ARGB)
     val raster = bufferedImage.getRaster
-    val index = space.Index.indexIndividuals(world, if (atHome) Individual.homeV.get else Individual.locationV.get)
     val maxOuputValue = Math.pow(2,8) - 1.0
     for {
-      (l, i) <- index.cells.zipWithIndex
-      (c, j) <- l.zipWithIndex
+      (l, i) <- values.zipWithIndex
+      (valueOption, j) <- l.zipWithIndex
     } yield {
       val ii = i* pixelSize
       val jj = (height - j - 1) * pixelSize
-      val values = c map getValue
-      val size = values.length
-      if (filter(size)) {
-        def aggValue = aggregator(values)
-        val color = if (size > 0) {
-          val lambda = clamp(if (rescale) (aggValue - minValue) / rangeValues else aggValue)
+      val color = valueOption match {
+        case Some(value) =>
+          val lambda = clamp(if (rescale) (value - minValue) / rangeValues else value)
           val v = ((1-lambda) * maxOuputValue).toInt
           Array(v, v, v, 255)
-        } else {
-          Array(0,0,0,0)
-        }
-        val vec = Array.fill(pixelSize * pixelSize)(color).flatten
-        raster.setPixels(ii, jj, pixelSize, pixelSize, vec)
+        case None =>
+          Array(0, 0, 0, 0)
       }
+      val vec = Array.fill(pixelSize * pixelSize)(color).flatten
+      raster.setPixels(ii, jj, pixelSize, pixelSize, vec)
     }
     if (!textLeft.isEmpty) {
       val g = bufferedImage.getGraphics
@@ -116,7 +183,7 @@ object worldMapper {
         g.setColor(c)
         g.fillRect((width - 20) * pixelSize, h, shift, shift)
         g.setColor(Color.black)
-        g.drawString(s"${(minValue + d) * rangeValues}", (width - 14) * pixelSize, h + shift)
+        g.drawString(s"${minValue + d * rangeValues}", (width - 14) * pixelSize, h + shift)
       }
     }
     val referencedEnvelope = new ReferencedEnvelope(originalBoundingBox.minI, originalBoundingBox.maxI+cellSize, originalBoundingBox.minJ, originalBoundingBox.maxJ+cellSize, crs)
