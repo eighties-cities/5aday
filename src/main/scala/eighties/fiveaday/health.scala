@@ -94,10 +94,10 @@ object health {
       val line = stats(category)
       val constraints = ChangeConstraints(budget = random.nextDouble() < line.budget, habit = random.nextDouble() < line.habit, time = random.nextDouble() < line.time)
 
-      val behaviour = if (random.nextDouble() < stats(category).consomation2002) Healthy else Unhealthy
+      val behaviour = if (random.nextDouble() < line.consomation2002) Healthy else Unhealthy
 
-      val distributionH = stats(category).opinionDistributionH
-      val distributionU = stats(category).opinionDistributionU
+      val distributionH = line.opinionDistributionH
+      val distributionU = line.opinionDistributionU
       val distribution = if (behaviour == Healthy) distributionH else distributionU
       val opinion = new RasterVariate(distribution.toArray, Seq(distribution.size)).compute(random).head
 

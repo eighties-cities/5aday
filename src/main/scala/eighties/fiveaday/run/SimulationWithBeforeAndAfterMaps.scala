@@ -74,7 +74,7 @@ object SimulationWithBeforeAndAfterMaps extends App {
       opt[Int]('c', "scenario")
         .validate(x => if(x < 1 || x > 5) Left("Scenario must be in the range 1 - 5") else Right())
         .action((x, c) => c.copy(scenario = Some(x)))
-        .text("seed for the random number generator"),
+        .text("scenario"),
       opt[Long]('s', "seed")
         .action((x, c) => c.copy(seed = Some(x)))
         .text("seed for the random number generator")
