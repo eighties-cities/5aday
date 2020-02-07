@@ -5,7 +5,10 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.13.1"
+scalaVersion := "2.12.10"
+
+crossScalaVersions := Seq("2.12.10", "2.13.1")
+
 
 //val monocleVersion = "1.5.0-cats"
 val monocleVersion = "1.6.0"
@@ -54,7 +57,19 @@ libraryDependencies ++= Seq (
  
 //addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
-scalacOptions ++= Seq("-Ymacro-annotations")
+scalacOptions ++= {
+  scalaBinaryVersion.value match {
+    case x if x.startsWith("2.12") => Seq("-target:jvm-1.8")
+    case _ => Seq("-target:jvm-1.8", "-language:postfixOps", "-Ymacro-annotations")
+  }
+}
+
+libraryDependencies ++= {
+  scalaBinaryVersion.value match {
+    case x if x.startsWith("2.12") => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
+    case _ => Seq()
+  }
+}
 
 enablePlugins(SbtOsgi)
 
@@ -65,8 +80,9 @@ osgiSettings
 OsgiKeys.exportPackage := Seq("eighties.*;-split-package:=merge-first")
 
 OsgiKeys.importPackage := Seq("*;resolution:=optional")
+//OsgiKeys.importPackage := Seq("")
 
-OsgiKeys.privatePackage := Seq("!java.*,*")
+OsgiKeys.privatePackage := Seq("!java.*,!scala.*,*")
 
 //OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))""""
 OsgiKeys.requireCapability := """osgi.ee; osgi.ee="JavaSE";version:List="1.8,1.9""""
@@ -85,3 +101,7 @@ OsgiKeys.additionalHeaders :=  Map(
 )
 
 OsgiKeys.embeddedJars := (Keys.externalDependencyClasspath in Compile).value map (_.data) filter (f=> (f.getName startsWith "gt-"))
+
+// do not use coursier at the moment: it fails on jai_core for some reason
+useCoursier := false
+
