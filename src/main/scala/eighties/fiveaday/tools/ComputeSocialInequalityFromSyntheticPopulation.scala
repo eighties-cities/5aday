@@ -15,9 +15,9 @@ import scala.util.Random
 
 object ComputeSocialInequalityFromSyntheticPopulation extends App {
   import HealthMatrix._
-  val dataDirectory = File("../data/")
-  val generatedData = File("data")
-  val distributionConstraints = dataDirectory / "initialisation_distribution_per_cat.csv"
+  val dataDirectory = File("data")
+  val generatedData = File("../h24/results_IDF")
+  val distributionConstraints = dataDirectory / "initialisation_distribution_per_cat_2002_2008.csv"
   val parser = new CSVParser(defaultCSVFormat)
   val header = headers(distributionConstraints)
 
@@ -33,14 +33,14 @@ object ComputeSocialInequalityFromSyntheticPopulation extends App {
   def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
   val world = generateWorld(worldFeature.individualFeatures, buildIndividual, Individual.locationV, Individual.homeV, rng)
 
-  for (date <- Seq("1996","2002","2008")) {
+  for (date <- Seq("2002","2008")) {
     val stats =
       distributionConstraints.lines.drop(1).flatMap(l => parser.parseLine(l)).map {
         cs =>
           val n = cs(header(s"n_$date")).toDouble
           val conso = cs(header(s"conso_5_$date")).toDouble
           AggregatedSocialCategory(sex = sex(cs(header("Sex"))), age = age(cs(header("Age"))), education = education(cs(header("Edu")))) ->
-            (conso * n + 1.0) / n
+            (conso * n) / n
       }.toMap
 
     val all = world.individuals.length
