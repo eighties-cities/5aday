@@ -21,22 +21,16 @@ import java.io.File
 import java.util.Calendar
 
 import better.files._
-import eighties.h24.dynamic.MoveMatrix._
-import eighties.h24.dynamic.{MoveMatrix, _}
 import eighties.h24.generation._
 import eighties.fiveaday.opinion.interchangeConviction
 import eighties.fiveaday.population._
-import eighties.fiveaday.run.Fit.fitness
 import eighties.h24.space._
-import eighties.fiveaday.{observable, population}
-import eighties.h24.{dynamic, space}
+import eighties.fiveaday.observable
 import eighties.fiveaday.health._
 import eighties.h24.simulation.MoveType
 import eighties.h24.simulation.simulateWithVisitor
-import eighties.h24.social._
 import scopt.OParser
 
-import scala.annotation.tailrec
 import scala.util.Random
 
 object SimulationWithBeforeAndAfterMaps extends App {
@@ -150,8 +144,9 @@ object SimulationWithBeforeAndAfterMaps extends App {
               println(s"\tday $day - slice $slice")
               if (day == days-1 && slice == 2) {
                 def soc = observable.weightedInequalityRatioBySexAge(world)
+                def initSoc = observable.weightedInequalityRatioBySexAge(initWorld)
                 util.mapHealth(world, obb, world.sideI, world.sideJ, output / "home" / "1_end.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
-                util.mapHealthDiff(initWorld, world, obb, world.sideI, world.sideJ, output / "home" / "2_diff.tiff", soc.toString, "", fraction = 4)
+                util.mapHealthDiff(initWorld, world, obb, world.sideI, world.sideJ, output / "home" / "2_diff.tiff", (soc - initSoc).toString, "", fraction = 8)
               }
             case None =>
               println(s"Init")
