@@ -1,7 +1,6 @@
 package eighties
 
 import monocle.Iso
-import spire.ClassTag
 
 import scala.annotation.tailrec
 import scala.util.Random

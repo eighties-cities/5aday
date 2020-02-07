@@ -5,14 +5,13 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.1"
 
 //val monocleVersion = "1.5.0-cats"
-val monocleVersion = "1.5.0"
+val monocleVersion = "1.6.0"
 
-val geotoolsVersion = "21.0"
-
-val breezeVersion = "0.13.2"
+//val geotoolsVersion = "21.0
+//val breezeVersion = "0.13.2"
 
 resolvers ++= Seq(
   "osgeo" at "http://download.osgeo.org/webdav/geotools/",
@@ -26,34 +25,36 @@ libraryDependencies ++= Seq (
   "com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
   "com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
   "com.github.julien-truffaut"  %%  "monocle-macro"   % monocleVersion,
-//  "org.geotools" % "geotools" % geotoolsVersion,
-  "org.geotools" % "gt-referencing" % geotoolsVersion,
+  //"org.geotools" % "geotools" % geotoolsVersion,
+  /*"org.geotools" % "gt-referencing" % geotoolsVersion,
   "org.geotools" % "gt-shapefile" % geotoolsVersion,
   "org.geotools" % "gt-epsg-wkt" % geotoolsVersion,
   "org.geotools" % "gt-cql" % geotoolsVersion,
   "org.geotools" % "gt-geotiff" % geotoolsVersion,
   "org.geotools" % "gt-image" % geotoolsVersion,
   "org.geotools" % "gt-coverage" % geotoolsVersion,
-  "org.geotools" % "gt-geojson" % geotoolsVersion,
-  "com.github.tototoshi" %% "scala-csv" % "1.3.4",
+  "org.geotools" % "gt-geojson" % geotoolsVersion,*/
+  //"com.github.tototoshi" %% "scala-csv" % "1.3.4",
   "org.apache.commons" % "commons-compress" % "1.11",
   "org.apache.commons" % "commons-math3" % "3.6.1",
   "org.tukaani" % "xz" % "1.6",
-  "com.github.pathikrit" %% "better-files" % "2.17.1",
-  "org.scalanlp" %% "breeze" % breezeVersion,
-  "org.scalanlp" %% "breeze-natives" % breezeVersion,
+  //"com.github.pathikrit" %% "better-files" % "2.17.1",
+  //"org.scalanlp" %% "breeze" % breezeVersion,
+  //"org.scalanlp" %% "breeze-natives" % breezeVersion,
   //"org.scalanlp" %% "breeze-viz" % breezeVersion,
-  "org.typelevel"  %% "squants"  % "1.1.0",
+  //"org.typelevel"  %% "squants"  % "1.1.0",
   "joda-time" % "joda-time" % "2.9.7",
   //"com.thoughtworks.xstream" % "xstream" % "1.4.9",
-  "io.suzaku" %% "boopickle" % "1.2.6",
+  //"io.suzaku" %% "boopickle" % "1.2.6",
   //"it.geosolutions.jaiext" % "jaiext" % "1.0.20"
-  "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-  "javax.media" % "jai_codec" % "1.1.3",
-  "javax.media" % "jai_imageio" % "1.1"
+  //"javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+  //"javax.media" % "jai_codec" % "1.1.3",
+  //"javax.media" % "jai_imageio" % "1.1"
 )
  
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+//addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+
+scalacOptions ++= Seq("-Ymacro-annotations")
 
 enablePlugins(SbtOsgi)
 

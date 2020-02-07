@@ -35,6 +35,8 @@ import eighties.h24.simulation.MoveType
 import eighties.h24.social._
 import scopt.OParser
 
+import better.files.Dsl.SymbolicOperations
+
 import scala.annotation.tailrec
 import scala.util.Random
 

@@ -4,6 +4,7 @@ import better.files.File
 import eighties.fiveaday.population.Individual
 import eighties.h24.space.{BoundingBox, World}
 import eighties.fiveaday.{observable, worldMapper}
+import better.files.Dsl.SymbolicOperations
 
 object util {
   def mapHealth(world: World[Individual], obb: BoundingBox, width: Int, height: Int, file: File, textLeft: String, textRight: String, atHome: Boolean = true, maxValue: Double = 1.0, fraction: Int = 4, rescale: Boolean = true) = {

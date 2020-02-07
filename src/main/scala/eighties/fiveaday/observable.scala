@@ -17,8 +17,8 @@
   */
 package eighties.fiveaday
 
-import better.files.File
-import breeze.numerics.pow
+import better.files._
+import better.files.Dsl.SymbolicOperations
 import com.github.tototoshi.csv.{CSVParser, defaultCSVFormat}
 import eighties.fiveaday.health._
 import eighties.h24.social._
@@ -273,7 +273,7 @@ object observable {
     survey.map{
       case (cat, proportionOfHealthyAllEdu) =>
         val (simHealthyRatio, groupWeight) = simulated(cat)
-        pow(simHealthyRatio - proportionOfHealthyAllEdu, 2.0) * groupWeight
+        scala.math.pow(simHealthyRatio - proportionOfHealthyAllEdu, 2.0) * groupWeight
 
     }.toArray.sum
   }
@@ -289,7 +289,7 @@ object observable {
     survey.map{
       case (cat, inequalityRatio) =>
         val (simHealthyRatio, groupWeight) = simulated(cat)
-        pow(simHealthyRatio - inequalityRatio, 2.0) * groupWeight
+        scala.math.pow(simHealthyRatio - inequalityRatio, 2.0) * groupWeight
 
     }.toArray.sum
   }

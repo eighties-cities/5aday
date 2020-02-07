@@ -8,7 +8,7 @@ import eighties.fiveaday.health._
 import eighties.fiveaday.opinion.InterchangeConviction
 import eighties.fiveaday.population._
 import eighties.h24.space.Location
-
+import better.files.Dsl.SymbolicOperations
 
 import eighties.h24.social._
 import scala.util.Random
