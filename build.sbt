@@ -66,7 +66,7 @@ OsgiKeys.exportPackage := Seq("eighties.*;-split-package:=merge-first")
 
 OsgiKeys.importPackage := Seq("*;resolution:=optional")
 
-OsgiKeys.privatePackage := Seq("!scala.*,!java.*,*")
+OsgiKeys.privatePackage := Seq("!java.*,*")
 
 //OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))""""
 OsgiKeys.requireCapability := """osgi.ee; osgi.ee="JavaSE";version:List="1.8,1.9""""
