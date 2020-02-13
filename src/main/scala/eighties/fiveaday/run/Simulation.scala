@@ -52,6 +52,8 @@ object Simulation {
 
     def exchange(moved: World[Individual], day: Int, slice: Int, rng: Random) = {
       println(s"simulate day $day, slice $slice")
+//      println("delta health: " + observable.deltaHealth(moved))
+//      println("social inequality: " + observable.weightedInequalityRatioBySexAge(moved))
 
       interchangeConviction(
         moved,
@@ -161,7 +163,6 @@ object SimulationApp extends App {
       //  println(Calendar.getInstance.getTime + " loading population")
       val worldFeatures = config.population.get
       val moves = config.moves.get
-
 
       //val dataDirectory = File("../data/")
       //  val pathEGT = dataDirectory / "EGT 2010/presence semaine EGT"

@@ -152,6 +152,9 @@ object SimulationWithBeforeAndAfterMaps extends App {
               println(s"Init")
               initWorld = world
               def soc = observable.weightedInequalityRatioBySexAge(world)
+              println(s"${Calendar.getInstance.getTime}: delta health: ${observable.deltaHealth(world)}")
+              println(s"${Calendar.getInstance.getTime}: social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
+
               util.mapHealth(world, obb, world.sideI, world.sideJ, output / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
           }
         }

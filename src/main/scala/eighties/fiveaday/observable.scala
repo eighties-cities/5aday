@@ -178,14 +178,14 @@ object observable {
     def filterIndividuals(category: AggregatedSocialCategory) =
       World.individualsVector[Individual].get(world).filter(i => Individual.socialCategoryV.get(i) == category)
 
-    val totalNumberOfIndividual = world.individuals.length
+//    val totalNumberOfIndividual = world.individuals.length
 
     for {
       category <- AggregatedSocialCategory.all
     } yield {
-      val indiviualsOfCategory = filterIndividuals(category)
-      val numberOfHealthyIndividuals = indiviualsOfCategory.count(i => Individual.healthy.get(i)) + 1
-      val numberOfIndividuals = indiviualsOfCategory.size + 1
+      def indiviualsOfCategory = filterIndividuals(category)
+      def numberOfHealthyIndividuals = indiviualsOfCategory.count(i => Individual.healthy.get(i)) + 1
+//      val numberOfIndividuals = indiviualsOfCategory.size + 1
       numberOfHealthyIndividuals.toDouble
     }
   }
@@ -274,13 +274,33 @@ object observable {
       case (cat, proportionOfHealthyAllEdu) =>
         val (simHealthyRatio, groupWeight) = simulated(cat)
         scala.math.pow(simHealthyRatio - proportionOfHealthyAllEdu, 2.0) * groupWeight
-
     }.toArray.sum
   }
 
   def deltaHealth(world: World[Individual]) = {
-    val numberOfHeathy2008 = Seq(11276.434, 7999.845, 9858.309, 88032.482, 73687.556, 103744.666, 74013.450, 62604.347, 54322.470, 18589.743, 16630.094, 7126.289, 116803.309, 97040.503, 95607.811, 117412.814, 125236.552, 89520.300)
-    (numberOfHeathy2008 zip healthyByCategory(world)).map { case(x, y) => math.abs(x - y) }.sum
+    val numberOfHeathy2008 = Seq(
+      36305.538,//11276.434,
+      8805.884,//7999.845,
+      11353.824,//9858.309,
+      91006.248,//88032.482,
+      73594.333,//73687.556,
+      103712.167,//103744.666,
+      76025.221,//74013.450,
+      62327.913,//62604.347,
+      53876.324,//54322.470,
+      61716.522,//18589.743,
+      18455.859,//16630.094,
+      8373.215,//7126.289,
+      120970.496,//116803.309,
+      96996.636,//97040.503,
+      95648.246,//95607.811,
+      120552.568,//117412.814,
+      125029.552,//125236.552,
+      88817.1//89520.300
+    )
+    (numberOfHeathy2008 zip healthyByCategory(world)).map { case(x, y) =>
+      println(s"$x == $y")
+      math.abs(x - y) }.sum
   }
 
   def deltaInequality(world: World[Individual], file: File, date: Int) = {

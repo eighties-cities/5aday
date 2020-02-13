@@ -60,10 +60,13 @@ object ComputeSocialInequalityFromSyntheticPopulation extends App {
         val numberOfLowHealthy = numberOfLow * stats(AggregatedSocialCategory(sex = sex, age = age, education = AggregatedEducation.Low))
 //        val (numberOfLowHealthy, numberOfLow) = stats.get(AggregatedSocialCategory(sex = sex, age = age, education = AggregatedEducation.Low)).get
 
+        val middle = sexAgeEducation(sex, age, AggregatedEducation.Middle)(world)
+        val numberOfMiddle = middle.individuals.length
+        val numberOfMiddleHealthy = numberOfMiddle * stats(AggregatedSocialCategory(sex = sex, age = age, education = AggregatedEducation.Middle))
 //        val (numberOfMiddleHealthy, numberOfMiddle) = stats.get(AggregatedSocialCategory(sex = sex, age = age, education = AggregatedEducation.Middle)).get
-//        println(s"$sex $age for $date numberOfLow = $numberOfLow = $numberOfLowHealthy")
-//        println(s"$sex $age for $date numberOfMiddle = $numberOfMiddle = $numberOfMiddleHealthy")
-//        println(s"$sex $age for $date numberOfHigh = $numberOfHigh = $numberOfHighHealthy")
+        println(s"$sex $age for $date numberOfLow = $numberOfLow = $numberOfLowHealthy")
+        println(s"$sex $age for $date numberOfMiddle = $numberOfMiddle = $numberOfMiddleHealthy")
+        println(s"$sex $age for $date numberOfHigh = $numberOfHigh = $numberOfHighHealthy")
 
 //        val all = world.individuals.length
         val sa = filterIndividualBySexAge(sex, age)(world).individuals.length
@@ -83,6 +86,6 @@ object ComputeSocialInequalityFromSyntheticPopulation extends App {
 
 //    val all = stats.map(_._2._2).sum
 
-    println(s"SI for $date = " + bySA.sum / all + s" with $all")
+    println(s"SI for $date = ${bySA.sum / all} with $all")
   }
 }

@@ -14,11 +14,12 @@ val monocleVersion = "1.6.0"
 //val breezeVersion = "0.13.2"
 
 resolvers ++= Seq(
-  "osgeo" at "http://download.osgeo.org/webdav/geotools/",
-  "geosolutions" at "http://maven.geo-solutions.it/",
-  "geotoolkit" at "http://maven.geotoolkit.org/",
+  "osgeo" at "https://download.osgeo.org/webdav/geotools/",
+  "geosolutions" at "https://maven.geo-solutions.it/",
+  "geotoolkit" at "https://maven.geotoolkit.org/",
 )
 
+resolvers -= DefaultMavenRepository
 
 libraryDependencies ++= Seq (
   "eighties" %% "h24" % "1.0-SNAPSHOT",
@@ -47,9 +48,9 @@ libraryDependencies ++= Seq (
   //"com.thoughtworks.xstream" % "xstream" % "1.4.9",
   //"io.suzaku" %% "boopickle" % "1.2.6",
   //"it.geosolutions.jaiext" % "jaiext" % "1.0.20"
-  //"javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-  //"javax.media" % "jai_codec" % "1.1.3",
-  //"javax.media" % "jai_imageio" % "1.1"
+  "javax.media" % "jai-core" % "1.1.3" from "https://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+  "javax.media" % "jai_codec" % "1.1.3",
+  "javax.media" % "jai_imageio" % "1.1"
 )
  
 //addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)

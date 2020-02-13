@@ -32,8 +32,12 @@ object ComputeSocialInequality extends App {
       } yield {
         val (numberOfHighHealthy, numberOfHigh) = stats(AggregatedSocialCategory(sex = sex, age = age, education = AggregatedEducation.High))
         val (numberOfLowHealthy, numberOfLow) = stats(AggregatedSocialCategory(sex = sex, age = age, education = AggregatedEducation.Low))
-        val (_, numberOfMiddle) = stats(AggregatedSocialCategory(sex = sex, age = age, education = AggregatedEducation.Middle))
+        val (numberOfMiddleHealthy, numberOfMiddle) = stats(AggregatedSocialCategory(sex = sex, age = age, education = AggregatedEducation.Middle))
         val sa = numberOfLow + numberOfMiddle + numberOfHigh
+        println(s"$sex $age for $date numberOfLow = $numberOfLow = $numberOfLowHealthy")
+        println(s"$sex $age for $date numberOfMiddle = $numberOfMiddle = $numberOfMiddleHealthy")
+        println(s"$sex $age for $date numberOfHigh = $numberOfHigh = $numberOfHighHealthy")
+
         weightedInequality(numberOfHighHealthy, numberOfHigh, numberOfLowHealthy, numberOfLow, sa)
       }
 
