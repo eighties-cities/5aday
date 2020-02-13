@@ -5,7 +5,7 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.12.10"
+scalaVersion := "2.13.1"
 
 crossScalaVersions := Seq("2.12.10", "2.13.1")
 
@@ -51,9 +51,9 @@ libraryDependencies ++= Seq (
   //"com.thoughtworks.xstream" % "xstream" % "1.4.9",
   //"io.suzaku" %% "boopickle" % "1.2.6",
   //"it.geosolutions.jaiext" % "jaiext" % "1.0.20"
-  "javax.media" % "jai-core" % "1.1.3" from "https://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-  "javax.media" % "jai_codec" % "1.1.3",
-  "javax.media" % "jai_imageio" % "1.1"
+//  "javax.media" % "jai-core" % "1.1.3"  % "runtime" from "https://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+//  "javax.media" % "jai_codec" % "1.1.3" % "runtime",
+//  "javax.media" % "jai_imageio" % "1.1" % "runtime"
 )
  
 //addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
