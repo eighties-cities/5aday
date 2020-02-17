@@ -25,9 +25,14 @@ import eighties.fiveaday.observable
 import eighties.fiveaday.opinion.interchangeConviction
 import eighties.fiveaday.population.Individual
 import eighties.fiveaday.health._
+import eighties.h24.dynamic.{MoveMatrix, assignFixNightLocation, assignRandomDayLocation}
+import eighties.h24.dynamic.MoveMatrix.{LocatedCell, TimeSlice}
 import eighties.h24.simulation._
+import eighties.h24.social.AggregatedSocialCategory
+import monocle.Lens
 import scopt.OParser
 
+import scala.reflect.ClassTag
 import scala.util.Random
 
 object Simulation {
@@ -75,11 +80,99 @@ object Simulation {
       moveType,
       buildIndividual,
       exchange,
-      Individual.stableDestinationsV,
       Individual.locationV,
       Individual.homeV,
       Individual.socialCategoryV.get,
       rng)
+  }
+
+  def simulate(
+    days: Int,
+    population: java.io.File,
+    moves: java.io.File,
+    moveType: MoveType,
+    buildIndividual: (IndividualFeature, Random) => Individual,
+    exchange: (World[Individual], Int, Int, Random) => World[Individual],
+    location: Lens[Individual, Location],
+    home: Lens[Individual, Location],
+    socialCategory: Individual => AggregatedSocialCategory,
+    rng: Random) = {
+
+    val moveMatrix = MoveMatrix.load(moves)
+    def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => moveMatrix.get((i, j), timeSlice)
+    def worldFeature = WorldFeature.load(population)
+
+    try {
+      simulateWorld(
+        days = days,
+        world = () => initialiseWorld(worldFeature, moveType, location, home, socialCategory, buildIndividual, locatedCell, rng),
+        bbox = worldFeature.originalBoundingBox,
+        locatedCell = locatedCell,
+        moveType = moveType,
+        exchange = exchange,
+        stableDestinations = Individual.stableDestinationsV,
+        location = location,
+        home = home.get,
+        socialCategory = socialCategory,
+        rng = rng
+      )
+    } finally moveMatrix.close
+  }
+
+
+  def initialiseWorld(
+    worldFeature: WorldFeature,
+    moveType: MoveType,
+    location: Lens[Individual, Location],
+    home: Lens[Individual, Location],
+    socialCategory: Individual => AggregatedSocialCategory,
+    buildIndividual: (IndividualFeature, Random) => Individual,
+    locatedCell: LocatedCell,
+    rng: Random)= {
+    def world = generateWorld(worldFeature.individualFeatures, buildIndividual, location, home, rng)
+
+    moveType match {
+      case MoveType.Data => assignRandomDayLocation(world, locatedCell, Individual.dayDestinationV, location.get, home.get, socialCategory, rng)
+      case MoveType.Random => world
+      case MoveType.No => world
+    }
+  }
+
+  def assignRandomDayLocation(
+    world: World[Individual],
+    locatedCell: LocatedCell,
+    dayDestination: Lens[Individual, Location],
+    location: Individual => Location,
+    home: Individual => Location,
+    socialCategory: Individual => AggregatedSocialCategory,
+    rng: Random) = {
+    import eighties.h24.dynamic
+
+    val newIndividuals = Array.ofDim[Individual](world.individuals.length)
+    var index = 0
+
+    for {
+      (line, i) <- Index.cells.get(Index.indexIndividuals(world, location)).zipWithIndex
+      (individuals, j) <- line.zipWithIndex
+    } {
+      val workTimeMovesFromCell = locatedCell(dayTimeSlice, i, j)
+
+      assert(workTimeMovesFromCell != null)
+
+      for {
+        individual <- individuals
+      } {
+        def newIndividual =
+          dynamic.sampleDestinationInMoveMatrix(workTimeMovesFromCell, individual, socialCategory, rng) match {
+            case Some(d) => dayDestination.set(d)(individual)
+            case None => dayDestination.set(home(individual))(individual)
+          }
+        newIndividuals(index) = newIndividual
+        index += 1
+      }
+    }
+
+    World.individuals.set(newIndividuals)(world)
   }
 
 }

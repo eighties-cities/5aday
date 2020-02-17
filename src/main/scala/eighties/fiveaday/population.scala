@@ -83,7 +83,7 @@ object population {
       feature: IndividualFeature,
       healthCategory: (AggregatedSocialCategory, Random) => HealthCategory,
       random: Random,
-      stableDestinations: Map[TimeSlice, Location] = Map.empty): Individual = {
+      dayDestination: Option[Location] = None): Individual = {
       val socialCategory = AggregatedSocialCategory(feature)
 
       Individual(
@@ -91,7 +91,7 @@ object population {
         healthCategory = healthCategory(socialCategory, random),
         feature.location,
         feature.location,
-        stableDestinations
+        dayDestination
       )
     }
 
@@ -100,7 +100,7 @@ object population {
      healthCategory: HealthCategory,
      home: Location,
      location: Location,
-     stableDestinations: Map[TimeSlice, Location]
+     dayDestination: Option[Location]
     ): Individual =
       new Individual(
         AggregatedSocialCategory.shortAggregatedSocialCategoryIso(socialCategory),
@@ -109,7 +109,7 @@ object population {
         healthCategory.changeConstraints,
         Location.toIndex(home),
         Location.toIndex(location),
-        mapOfStableLocationToArray(stableDestinations))
+        dayDestination.map(Location.toIndex).getOrElse(Location.noLocationIndex))
 
     def arrayMapIso = monocle.Iso[Array[(TimeSlice, Int)], Map[TimeSlice, Int]](_.toMap)(_.toArray)
 
@@ -124,7 +124,8 @@ object population {
 
     def timeSlicesMapIso = monocle.Iso[Array[Short], Map[TimeSlice, Location]] (arrayToMapOfStableLocation) (mapOfStableLocationToArray)
 
-    def stableDestinationsV = Individual.stableDestinations composeIso timeSlicesMapIso
+    def stableDestinationsV(i: Individual) = timeSlicesMapIso.get(Array(i.home, i.dayDestination, Location.noLocationIndex))
+    def dayDestinationV = Individual.dayDestination composeIso Location.indexIso
 
     def education = socialCategoryV composeLens AggregatedSocialCategory.education
     def age = socialCategoryV composeLens AggregatedSocialCategory.age
@@ -146,6 +147,6 @@ object population {
     changeConstraints: Byte,
     home: Short,
     location: Short,
-    stableDestinations: Array[Short])
+    dayDestination: Short)
 
 }

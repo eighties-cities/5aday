@@ -121,8 +121,8 @@ object FitWithMap {
         case time :: t =>
           println(Calendar.getInstance.getTime + " simulate day " + day +  ", time slice " + time)
           def moved = moveType match {
-            case MoveType.Data => dynamic.moveInMoveMatrix(world, locatedCell, time, Individual.stableDestinationsV.get, Individual.locationV, Individual.homeV.get, Individual.socialCategoryV.get, rng)
-            case MoveType.Random => dynamic.randomMove(world, time, 1.0, Individual.locationV, Individual.stableDestinationsV.get, rng)
+            case MoveType.Data => dynamic.moveInMoveMatrix(world, locatedCell, time, Individual.stableDestinationsV, Individual.locationV, Individual.homeV.get, Individual.socialCategoryV.get, rng)
+            case MoveType.Random => dynamic.randomMove(world, time, 1.0, Individual.locationV, Individual.stableDestinationsV, rng)
             case MoveType.No => world
           }
           val convicted = interchangeConviction(
@@ -147,19 +147,7 @@ object FitWithMap {
       }
 
     def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, rng)
-    val worldInit = generateWorld(worldFeature.individualFeatures, buildIndividual, Individual.locationV, Individual.homeV, rng)
-
-    val populationWithMoves = moveType match {
-      case MoveType.Data =>
-        val fixedDay =  assignRandomDayLocation(worldInit, locatedCell, Individual.stableDestinationsV, Individual.locationV.get, Individual.homeV.get, Individual.socialCategoryV.get, rng)
-        assignFixNightLocation(
-          fixedDay,
-          Individual.stableDestinationsV,
-          Individual.homeV.get
-        )
-      case MoveType.Random => assignFixNightLocation(worldInit, Individual.stableDestinationsV, Individual.homeV.get)
-      case MoveType.No => assignFixNightLocation(worldInit, Individual.stableDestinationsV, Individual.homeV.get)
-    }
+    val populationWithMoves =  Simulation.initialiseWorld(worldFeature, moveType, Individual.locationV, Individual.homeV, Individual.socialCategoryV.get, buildIndividual, locatedCell, rng)
 
     util.writeState(populationWithMoves, outputPath.toScala / "init.csv")
     println(Calendar.getInstance.getTime + " run simulation")

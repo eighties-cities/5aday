@@ -27,8 +27,10 @@ import eighties.fiveaday.population._
 import eighties.h24.space._
 import eighties.fiveaday.observable
 import eighties.fiveaday.health._
-import eighties.h24.simulation.MoveType
-import eighties.h24.simulation.simulateWithVisitor
+import eighties.fiveaday.run.Simulation.initialiseWorld
+import eighties.h24.dynamic.MoveMatrix
+import eighties.h24.dynamic.MoveMatrix.{LocatedCell, TimeSlice}
+import eighties.h24.simulation.{MoveType, simulateWorld}
 import scopt.OParser
 
 import scala.util.Random
@@ -158,20 +160,44 @@ object SimulationWithBeforeAndAfterMaps extends App {
               util.mapHealth(world, obb, world.sideI, world.sideJ, output / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
           }
         }
-        val world = simulateWithVisitor[Individual](
-          days,
-          worldFeatures,
-          moves,
-          moveType,
-          buildIndividual,
-          exchange,
-          Individual.stableDestinationsV,
-          Individual.locationV,
-          Individual.homeV,
-          Individual.socialCategoryV.get,
-          visit,
-          rng
-        )
+
+
+        val moveMatrix = MoveMatrix.load(moves)
+        def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => moveMatrix.get((i, j), timeSlice)
+        def worldFeature = WorldFeature.load(worldFeatures)
+
+        val world =
+          try {
+            simulateWorld(
+              days = days,
+              world = () => initialiseWorld(worldFeature, moveType, Individual.locationV, Individual.homeV, Individual.socialCategoryV.get, buildIndividual, locatedCell, rng),
+              bbox = worldFeature.originalBoundingBox,
+              locatedCell = locatedCell,
+              moveType = moveType,
+              exchange = exchange,
+              stableDestinations = Individual.stableDestinationsV,
+              location = Individual.locationV,
+              home = Individual.homeV.get,
+              socialCategory = Individual.socialCategoryV.get,
+              rng = rng,
+              visitor = Some(visit(_, _, _))
+            )
+          } finally moveMatrix.close
+
+//        val world = simulateWithVisitor[Individual](
+//          days,
+//          worldFeatures,
+//          moves,
+//          moveType,
+//          buildIndividual,
+//          exchange,
+//          Individual.stableDestinationsV,
+//          Individual.locationV,
+//          Individual.homeV,
+//          Individual.socialCategoryV.get,
+//          visit,
+//          rng
+//        )
         println(s"${Calendar.getInstance.getTime}: finished simulation for $days days")
         println(s"${Calendar.getInstance.getTime}: delta health: ${observable.deltaHealth(world)}")
         println(s"${Calendar.getInstance.getTime}: social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
