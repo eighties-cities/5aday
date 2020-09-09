@@ -20,22 +20,21 @@ package eighties.fiveaday.run
 import java.io.File
 import java.util.Calendar
 
+import better.files.Dsl.SymbolicOperations
 import better.files._
-import eighties.h24.dynamic.MoveMatrix._
-import eighties.h24.dynamic.{MoveMatrix, _}
-import eighties.h24.generation._
+import eighties.fiveaday.health._
+import eighties.fiveaday.observable
 import eighties.fiveaday.opinion.interchangeConviction
 import eighties.fiveaday.population._
 import eighties.fiveaday.run.Fit.fitness
-import eighties.h24.space._
-import eighties.fiveaday.observable
-import eighties.h24.{dynamic, space}
-import eighties.fiveaday.health._
+import eighties.h24.dynamic.MoveMatrix
+import eighties.h24.dynamic.MoveMatrix._
+import eighties.h24.generation._
 import eighties.h24.simulation.MoveType
 import eighties.h24.social._
+import eighties.h24.space._
+import eighties.h24.{dynamic, space}
 import scopt.OParser
-
-import better.files.Dsl.SymbolicOperations
 
 import scala.annotation.tailrec
 import scala.util.Random
@@ -184,6 +183,7 @@ object SimulationWithMapApp extends App {
 
   case class Config(
     population: Option[File] = None,
+    randomPopulation: Option[File] = None,
     moves: Option[File] = None,
     distribution: Option[File] = None,
     output: Option[File] = None,
@@ -204,6 +204,10 @@ object SimulationWithMapApp extends App {
         .required()
         .action((x, c) => c.copy(population = Some(x)))
         .text("population file generated with h24"),
+      opt[File]('r', "randomPopulation")
+        .required()
+        .action((x, c) => c.copy(randomPopulation = Some(x)))
+        .text("random population file generated with h24"),
       opt[File]('m', "moves")
         .required()
         .action((x, c) => c.copy(moves = Some(x)))
@@ -237,7 +241,9 @@ object SimulationWithMapApp extends App {
           ("calibration", (0.9999372894598938, 3.780104482210688E-5, 0.1391139744735069, 0.10973200449784659, 0.9011227599761806)),
           ("calibration_fitness", (0.8507843893208267, 0.45377746673575825, 0.6585498777924014, 0.210784861364803, 0.2589547233574915)),
           ("ose", (1.0, 0.12454546, 0.66766742, 0.26597869, 0.24032422)),
-          ("duo_0703", (0.996, 0.405, 0.787, 0.161, 0.102))
+          ("duo_0703", (0.996, 0.405, 0.787, 0.161, 0.102)),
+          ("summer2020", (0.010216504, 0.0, 0.806896825, 0.767755389, 0.790965130)),
+          ("hope2020", (0.02571037, 0.00878027, 0.55859533, 0.72271431, 0.6156984))
         )
         val scenarioMap = Map(
           (1, (RandomPop, MoveType.No)),
@@ -261,7 +267,10 @@ object SimulationWithMapApp extends App {
         val output = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed"
         output.createDirectories
 
-        val worldFeatures = config.population.get
+        val worldFeatures = pop match {
+          case RandomPop => config.randomPopulation.get
+          case ObservedPop => config.population.get
+        }
 
         val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap(parameterName)
 
@@ -281,7 +290,7 @@ object SimulationWithMapApp extends App {
         )
       }
 
-      val parameterName = "duo_0703"
+      val parameterName = "hope2020"
       val seed = config.seed.getOrElse(42L)
 
       if (config.scenario.isDefined) run(config.scenario.get, parameterName, seed)

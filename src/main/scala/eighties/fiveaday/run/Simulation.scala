@@ -25,14 +25,13 @@ import eighties.fiveaday.observable
 import eighties.fiveaday.opinion.interchangeConviction
 import eighties.fiveaday.population.Individual
 import eighties.fiveaday.health._
-import eighties.h24.dynamic.{MoveMatrix, assignFixNightLocation, assignRandomDayLocation}
+import eighties.h24.dynamic.MoveMatrix
 import eighties.h24.dynamic.MoveMatrix.{LocatedCell, TimeSlice}
 import eighties.h24.simulation._
 import eighties.h24.social.AggregatedSocialCategory
 import monocle.Lens
 import scopt.OParser
 
-import scala.reflect.ClassTag
 import scala.util.Random
 
 object Simulation {
@@ -56,7 +55,7 @@ object Simulation {
     def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, rng)
 
     def exchange(moved: World[Individual], day: Int, slice: Int, rng: Random) = {
-      println(s"simulate day $day, slice $slice")
+//      println(s"simulate day $day, slice $slice")
 //      println("delta health: " + observable.deltaHealth(moved))
 //      println("social inequality: " + observable.weightedInequalityRatioBySexAge(moved))
 
@@ -116,7 +115,7 @@ object Simulation {
         socialCategory = socialCategory,
         rng = rng
       )
-    } finally moveMatrix.close
+    } finally moveMatrix.close()
   }
 
 
@@ -128,7 +127,7 @@ object Simulation {
     socialCategory: Individual => AggregatedSocialCategory,
     buildIndividual: (IndividualFeature, Random) => Individual,
     locatedCell: LocatedCell,
-    rng: Random)= {
+    rng: Random) = {
     def world = generateWorld(worldFeature.individualFeatures, buildIndividual, location, home, rng)
 
     moveType match {
@@ -200,7 +199,7 @@ object Fit {
         constraintsStrength = constraintsStrength,
         inertiaCoefficient = inertiaCoefficient,
         healthyDietReward = healthyDietReward,
-        interpersonalInfluence = inertiaCoefficient,
+        interpersonalInfluence = interpersonalInfluence,
         days = days,
         population = population,
         moves = moves,
@@ -284,8 +283,8 @@ object SimulationApp extends App {
           rng = rng
         )
 
-      println("delta health: " + observable.deltaHealth(world))
-      println("social inequality: " + observable.weightedInequalityRatioBySexAge(world))
+//      println("delta health: " + observable.deltaHealth(world))
+//      println("social inequality: " + observable.weightedInequalityRatioBySexAge(world))
       //println("world error: " + World.allIndividuals.getAll(world).count(_.healthy))
     case _ =>
   }
