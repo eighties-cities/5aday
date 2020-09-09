@@ -60,14 +60,13 @@ object health {
     import HealthMatrix._
     val parser = new CSVParser(defaultCSVFormat)
 
-
     case class CSVLine(
-                        consomation2002: Double,
-                        habit: Double,
-                        budget: Double,
-                        time: Double,
-                        opinionDistributionH: Vector[Double],
-                        opinionDistributionU: Vector[Double])
+      consomation2002: Double,
+      habit: Double,
+      budget: Double,
+      time: Double,
+      opinionDistributionH: Vector[Double],
+      opinionDistributionU: Vector[Double])
 
     val header = headers(file.toScala)
 
@@ -92,6 +91,7 @@ object health {
 
     (category: AggregatedSocialCategory, random: Random) => {
       val line = stats(category)
+
       val constraints = ChangeConstraints(budget = random.nextDouble() < line.budget, habit = random.nextDouble() < line.habit, time = random.nextDouble() < line.time)
 
       val behaviour = if (random.nextDouble() < line.consomation2002) Healthy else Unhealthy
@@ -106,9 +106,9 @@ object health {
   }
 
   case class Interactions(
-                           breakfastInteraction: Double,
-                           lunchInteraction: Double,
-                           dinnerInteraction: Double)
+    breakfastInteraction: Double,
+    lunchInteraction: Double,
+    dinnerInteraction: Double)
 
   def generateInteractionMap(file: java.io.File) = {
     import HealthMatrix._
