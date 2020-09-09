@@ -5,19 +5,19 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.12.10"
+scalaVersion := "2.13.3"
 
-crossScalaVersions := Seq("2.12.10", "2.13.1")
+crossScalaVersions := Seq("2.12.12", "2.13.3")
 
 
 //val monocleVersion = "1.5.0-cats"
-val monocleVersion = "1.6.0"
+val monocleVersion = "2.0.1"
 
 //val geotoolsVersion = "21.0
 //val breezeVersion = "0.13.2"
 
 resolvers ++= Seq(
-  "osgeo" at "https://download.osgeo.org/webdav/geotools/",
+  "osgeo" at "https://repo.osgeo.org/repository/release/",
   "geosolutions" at "https://maven.geo-solutions.it/",
   "geotoolkit" at "https://maven.geotoolkit.org/",
 )
@@ -51,7 +51,7 @@ libraryDependencies ++= Seq (
   //"com.thoughtworks.xstream" % "xstream" % "1.4.9",
   //"io.suzaku" %% "boopickle" % "1.2.6",
   //"it.geosolutions.jaiext" % "jaiext" % "1.0.20"
-//  "javax.media" % "jai-core" % "1.1.3"  % "runtime" from "https://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+  "javax.media" % "jai-core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
 //  "javax.media" % "jai_codec" % "1.1.3" % "runtime",
 //  "javax.media" % "jai_imageio" % "1.1" % "runtime"
 )
@@ -104,5 +104,5 @@ OsgiKeys.additionalHeaders :=  Map(
 OsgiKeys.embeddedJars := (Keys.externalDependencyClasspath in Compile).value map (_.data) filter (f=> (f.getName startsWith "gt-"))
 
 // do not use coursier at the moment: it fails on jai_core for some reason
-useCoursier := false
+//useCoursier := false
 
