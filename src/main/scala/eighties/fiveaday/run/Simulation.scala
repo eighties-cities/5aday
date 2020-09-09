@@ -200,7 +200,7 @@ object Fit {
         constraintsStrength = constraintsStrength,
         inertiaCoefficient = inertiaCoefficient,
         healthyDietReward = healthyDietReward,
-        interpersonalInfluence = inertiaCoefficient,
+        interpersonalInfluence = interpersonalInfluence,
         days = days,
         population = population,
         moves = moves,
