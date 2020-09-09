@@ -105,6 +105,7 @@ object observable {
         val numberOfLow = low.individuals.length
         val sa = filterIndividualBySexAge(sex, age)(world).individuals.length
 //        ((numberOfHighHealthy.toDouble / numberOfHigh) / (numberOfLowHealthy.toDouble / numberOfLow)) * (sa.toDouble / all)
+//        println(s"$sex - $age => high healthy = $numberOfHighHealthy - low healthy = $numberOfLowHealthy (high = $numberOfHigh - low = $numberOfLow) => $sa")
         weightedInequality(numberOfHighHealthy, numberOfHigh, numberOfLowHealthy, numberOfLow, sa)
       }
     bySA.sum / all
@@ -185,6 +186,7 @@ object observable {
     } yield {
       def indiviualsOfCategory = filterIndividuals(category)
       def numberOfHealthyIndividuals = indiviualsOfCategory.count(i => Individual.healthy.get(i)) + 1
+//      println(s"Category $category => ${indiviualsOfCategory.size} / $numberOfHealthyIndividuals")
 //      val numberOfIndividuals = indiviualsOfCategory.size + 1
       numberOfHealthyIndividuals.toDouble
     }
@@ -299,7 +301,7 @@ object observable {
       88817.1//89520.300
     )
     (numberOfHeathy2008 zip healthyByCategory(world)).map { case(x, y) =>
-      println(s"$x == $y")
+//      println(s"$x == $y")
       math.abs(x - y) }.sum
   }
 

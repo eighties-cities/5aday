@@ -22,6 +22,7 @@ import com.github.tototoshi.csv.{CSVParser, defaultCSVFormat}
 import eighties.fiveaday.population.{ChangeConstraints, HealthCategory, Healthy, Unhealthy}
 import eighties.h24.generation.RasterVariate
 import eighties.h24.social.{AggregatedAge, AggregatedEducation, AggregatedSocialCategory, Sex}
+import eighties.h24.tools.random.multinomial
 
 import scala.util.Random
 
@@ -88,7 +89,6 @@ object health {
               opinionDistributionU = cs.slice(indexU1, indexU5).map(_.toDouble).toVector
             )
       }.toMap
-
     (category: AggregatedSocialCategory, random: Random) => {
       val line = stats(category)
 
@@ -99,8 +99,8 @@ object health {
       val distributionH = line.opinionDistributionH
       val distributionU = line.opinionDistributionU
       val distribution = if (behaviour == Healthy) distributionH else distributionU
-      val opinion = new RasterVariate(distribution.toArray, Seq(distribution.size)).compute(random).head
-
+//      val opinion = new RasterVariate(distribution.toArray, Seq(distribution.size)).compute(random).head
+      val opinion = multinomial[Double](Array(0,0.25,0.5,0.75,1.0) zip distribution.toArray)(random)
       HealthCategory(opinion.toFloat, behaviour, constraints)
     }
   }
