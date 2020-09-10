@@ -70,6 +70,7 @@ object ComputeSocialInequalityFromSyntheticPopulation extends App {
 
 //        val all = world.individuals.length
         val sa = filterIndividualBySexAge(sex, age)(world).individuals.length
+        assert(sa == numberOfLow + numberOfMiddle + numberOfHigh)
 //        val sa = numberOfLow + numberOfMiddle + numberOfHigh
 
 //        println(s"$sex $age for $date = " + sa)

@@ -18,7 +18,6 @@
 package eighties.fiveaday.run
 
 import java.io.File
-import java.util.Calendar
 
 import better.files.Dsl.SymbolicOperations
 import better.files._
@@ -33,6 +32,7 @@ import eighties.h24.generation._
 import eighties.h24.simulation.MoveType
 import eighties.h24.social._
 import eighties.h24.space._
+import eighties.h24.tools.Log.log
 import eighties.h24.{dynamic, space}
 import scopt.OParser
 
@@ -54,17 +54,17 @@ object FitWithMap {
     moveType: MoveType,
     rng: Random) = {
 
-    println(Calendar.getInstance.getTime + " loading population")
+    log("loading population")
     def worldFeature = WorldFeature.load(population) //generatedData / "population.bin")
 
     val healthCategory = generateHealthCategory(distributionConstraints)
     val interactionMap = generateInteractionMap(distributionConstraints)
 
-    println(s"${Calendar.getInstance.getTime} compute bounding box")
+    log("compute bounding box")
     val obbox = worldFeature.originalBoundingBox
     val bbox = worldFeature.boundingBox
-    println(s"${Calendar.getInstance.getTime} bounding box = ${obbox.minI} ${obbox.minJ} ${obbox.maxI} ${obbox.maxJ} ${obbox.sideI} ${obbox.sideI}")
-    println(s"${Calendar.getInstance.getTime} bounding box = ${bbox.minI} ${bbox.minJ} ${bbox.maxI} ${bbox.maxJ} ${bbox.sideI} ${bbox.sideI}")
+    log(s"bounding box = ${obbox.minI} ${obbox.minJ} ${obbox.maxI} ${obbox.maxJ} ${obbox.sideI} ${obbox.sideI}")
+    log(s"bounding box = ${bbox.minI} ${bbox.minJ} ${bbox.maxI} ${bbox.maxJ} ${bbox.sideI} ${bbox.sideI}")
 
     val moveMatrix = MoveMatrix.load(moves)
     def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) =>  moveMatrix.get((i, j), timeSlice)
@@ -118,7 +118,7 @@ object FitWithMap {
       timeSlices match {
         case Nil => world
         case time :: t =>
-          println(Calendar.getInstance.getTime + " simulate day " + day +  ", time slice " + time)
+          log("simulate day " + day +  ", time slice " + time)
           def moved = moveType match {
             case MoveType.Data => dynamic.moveInMoveMatrix(world, locatedCell, time, Individual.stableDestinationsV, Individual.locationV, Individual.homeV.get, Individual.socialCategoryV.get, rng)
             case MoveType.Random => dynamic.randomMove(world, time, 1.0, Individual.locationV, Individual.stableDestinationsV, rng)
@@ -149,7 +149,7 @@ object FitWithMap {
     val populationWithMoves =  Simulation.initialiseWorld(worldFeature, moveType, Individual.locationV, Individual.homeV, Individual.socialCategoryV.get, buildIndividual, locatedCell, rng)
 
     util.writeState(populationWithMoves, outputPath.toScala / "init.csv")
-    println(Calendar.getInstance.getTime + " run simulation")
+    log("run simulation")
 
     //mapHealth(world, bbox, File(outputPath.toURI) / "health" / "home" / f"00_0.tiff", soc.toString, f"00_0")
     //mapHealth(world, bbox, File(outputPath.toURI) / "health" / "home" / f"00_0.tiff", soc.toString, f"00_0", false)
@@ -164,7 +164,7 @@ object FitWithMap {
       }
 
     val worldAtTheEnd = simulateAllDays(0, populationWithMoves)
-    println(Calendar.getInstance.getTime + " finished simulation for " + days + " days")
+    log("finished simulation for " + days + " days")
     val deltaHealth = fitness(worldAtTheEnd)
     util.writeState(worldAtTheEnd, outputPath.toScala / "final.csv", Some(deltaHealth))
     deltaHealth
@@ -290,7 +290,7 @@ object SimulationWithMapApp extends App {
         )
       }
 
-      val parameterName = "hope2020"
+      val parameterName = "summer2020"
       val seed = config.seed.getOrElse(42L)
 
       if (config.scenario.isDefined) run(config.scenario.get, parameterName, seed)
