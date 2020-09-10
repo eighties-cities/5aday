@@ -144,43 +144,29 @@ object FitWithMap {
           //mapOpinion(convicted, bb, File(outputPath.toURI) / "opinion" / "location" / f"${day}%02d_${slice}.tiff", false)
           simulateOneDay(convicted, obb, bb, t, locatedCell, day, slice + 1)
       }
-
-    def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, rng)
+    def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
     val populationWithMoves =  Simulation.initialiseWorld(worldFeature, moveType, Individual.locationV, Individual.homeV, Individual.socialCategoryV.get, buildIndividual, locatedCell, rng)
-
     util.writeState(populationWithMoves, outputPath.toScala / "init.csv")
     log("run simulation")
-
-    //mapHealth(world, bbox, File(outputPath.toURI) / "health" / "home" / f"00_0.tiff", soc.toString, f"00_0")
-    //mapHealth(world, bbox, File(outputPath.toURI) / "health" / "home" / f"00_0.tiff", soc.toString, f"00_0", false)
-    //mapOpinion(world, bbox, File(outputPath.toURI) / "opinion" / "home" / f"00_0.tiff")
-    //mapOpinion(world, bbox, File(outputPath.toURI) / "opinion" / "location" / f"00_0.tiff", false)
-
     @tailrec def simulateAllDays(day: Int, world: World[Individual]): World[Individual] =
       if(day == days) world
       else {
         def newWorld = simulateOneDay(world, obbox, bbox, timeSlices.toList, locatedCell, day)
         simulateAllDays(day + 1, newWorld)
       }
-
     val worldAtTheEnd = simulateAllDays(0, populationWithMoves)
     log("finished simulation for " + days + " days")
     val deltaHealth = fitness(worldAtTheEnd)
     util.writeState(worldAtTheEnd, outputPath.toScala / "final.csv", Some(deltaHealth))
     deltaHealth
   }
-
- // def loadMatrix(data: File) = data.lines.drop(1)
 }
-
-
 
 sealed trait PopType
 case object RandomPop extends PopType
 case object ObservedPop extends PopType
 
 object SimulationWithMapApp extends App {
-
   case class Config(
     population: Option[File] = None,
     randomPopulation: Option[File] = None,
@@ -189,7 +175,6 @@ object SimulationWithMapApp extends App {
     output: Option[File] = None,
     seed: Option[Long] = None,
     scenario: Option[Int] = None)
-
   val builder = OParser.builder[Config]
   val parser = {
     import builder._
@@ -225,15 +210,12 @@ object SimulationWithMapApp extends App {
         .text("seed for the random number generator")
     )
   }
-
   OParser.parse(parser, args, Config()) match {
     case Some(config) =>
       def run(scenario: Int, parameterName: String, seed: Long) {
         val rng = new Random(seed)
-
         val moves = config.moves.get
         val distributionConstraints = config.distribution.get
-
         val parameterMap = Map(
           ("environment", (0.08433503404492204, 0.14985650295919095, 0.7333227248982435, 0.03291749337039018, 0.23398559843386524)),
           ("partner", (0.029443016524418164, 0.05415637081735669, 0.20870694702023695, 0.10353942953774942, 0.7233067964061539)),
@@ -252,7 +234,6 @@ object SimulationWithMapApp extends App {
           (4, (ObservedPop, MoveType.Random)),
           (5, (ObservedPop, MoveType.Data))
         )
-
         val (pop, moveType) = scenarioMap(scenario)
         val moveTypeString = moveType match {
           case MoveType.Data => "ObservedMove"
@@ -263,17 +244,13 @@ object SimulationWithMapApp extends App {
           case RandomPop => "RandomPop"
           case ObservedPop => "ObservedPop"
         }
-
         val output = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed"
         output.createDirectories
-
         val worldFeatures = pop match {
           case RandomPop => config.randomPopulation.get
           case ObservedPop => config.population.get
         }
-
         val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap(parameterName)
-
         FitWithMap.run(
           maxProbaToSwitch = maxProbaToSwitch,
           constraintsStrength = constraintsStrength,
@@ -289,10 +266,8 @@ object SimulationWithMapApp extends App {
           rng = rng
         )
       }
-
       val parameterName = "summer2020"
       val seed = config.seed.getOrElse(42L)
-
       if (config.scenario.isDefined) run(config.scenario.get, parameterName, seed)
       else {
         for (scenario <- 1 to 5) run(scenario, parameterName, seed)

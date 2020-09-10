@@ -18,7 +18,6 @@
 package eighties.fiveaday.run
 
 import java.io.File
-import java.util.Calendar
 
 import better.files._
 import eighties.h24.generation._
@@ -31,6 +30,7 @@ import eighties.fiveaday.run.Simulation.initialiseWorld
 import eighties.h24.dynamic.MoveMatrix
 import eighties.h24.dynamic.MoveMatrix.{LocatedCell, TimeSlice}
 import eighties.h24.simulation.{MoveType, simulateWorld}
+import eighties.h24.tools.Log.log
 import scopt.OParser
 
 import scala.util.Random
@@ -132,9 +132,9 @@ object SimulationWithBeforeAndAfterMaps extends App {
 
         val healthCategory = generateHealthCategory(distributionConstraints)
         val interactionMap = generateInteractionMap(distributionConstraints)
-        def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, rng)
+        def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
         def exchange(moved: World[Individual], day: Int, slice: Int, rng: Random) = {
-          println(s"simulate day $day, slice $slice")
+          log(s"simulate day $day, slice $slice")
           interchangeConviction(
             moved,
             slice,
@@ -153,7 +153,7 @@ object SimulationWithBeforeAndAfterMaps extends App {
         def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]) = {
           option match {
             case Some((day, slice)) =>
-              println(s"\tday $day - slice $slice")
+              log(s"\tday $day - slice $slice")
               if (day == days-1 && slice == 2) {
                 def soc = observable.weightedInequalityRatioBySexAge(world)
                 def initSoc = observable.weightedInequalityRatioBySexAge(initWorld)
@@ -161,11 +161,11 @@ object SimulationWithBeforeAndAfterMaps extends App {
                 util.mapHealthDiff(initWorld, world, obb, world.sideI, world.sideJ, output / "home" / "2_diff.tiff", (soc - initSoc).toString, "", fraction = 8)
               }
             case None =>
-              println(s"Init")
+              log("Init")
               initWorld = world
               def soc = observable.weightedInequalityRatioBySexAge(world)
-              println(s"${Calendar.getInstance.getTime}: delta health: ${observable.deltaHealth(world)}")
-              println(s"${Calendar.getInstance.getTime}: social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
+              log(s"delta health: ${observable.deltaHealth(world)}")
+              log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
 
               util.mapHealth(world, obb, world.sideI, world.sideJ, output / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
           }
@@ -178,7 +178,7 @@ object SimulationWithBeforeAndAfterMaps extends App {
 
         val world =
           try {
-            simulateWorld(
+            simulateWorld[Individual](
               days = days,
               world = () => initialiseWorld(worldFeature, moveType, Individual.locationV, Individual.homeV, Individual.socialCategoryV.get, buildIndividual, locatedCell, rng),
               bbox = worldFeature.originalBoundingBox,
@@ -190,27 +190,12 @@ object SimulationWithBeforeAndAfterMaps extends App {
               home = Individual.homeV.get,
               socialCategory = Individual.socialCategoryV.get,
               rng = rng,
-              visitor = Some(visit(_, _, _))
+              visitor = Some(visit)
             )
           } finally moveMatrix.close()
-
-//        val world = simulateWithVisitor[Individual](
-//          days,
-//          worldFeatures,
-//          moves,
-//          moveType,
-//          buildIndividual,
-//          exchange,
-//          Individual.stableDestinationsV,
-//          Individual.locationV,
-//          Individual.homeV,
-//          Individual.socialCategoryV.get,
-//          visit,
-//          rng
-//        )
-        println(s"${Calendar.getInstance.getTime}: finished simulation for $days days")
-        println(s"${Calendar.getInstance.getTime}: delta health: ${observable.deltaHealth(world)}")
-        println(s"${Calendar.getInstance.getTime}: social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
+        log(s"finished simulation for $days days")
+        log(s"delta health: ${observable.deltaHealth(world)}")
+        log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
       }
 
       val parameterName = "hope2020"

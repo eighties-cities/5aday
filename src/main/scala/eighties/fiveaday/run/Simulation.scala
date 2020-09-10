@@ -18,18 +18,17 @@
 package eighties.fiveaday.run
 
 import java.io.File
-import java.util.Calendar
 
-import eighties.h24.generation._
-import eighties.h24.space._
+import eighties.fiveaday.health._
 import eighties.fiveaday.observable
 import eighties.fiveaday.opinion.interchangeConviction
 import eighties.fiveaday.population.Individual
-import eighties.fiveaday.health._
 import eighties.h24.dynamic.MoveMatrix
 import eighties.h24.dynamic.MoveMatrix.{LocatedCell, TimeSlice}
+import eighties.h24.generation._
 import eighties.h24.simulation._
 import eighties.h24.social.AggregatedSocialCategory
+import eighties.h24.space._
 import eighties.h24.tools.Log.log
 import monocle.Lens
 import scopt.OParser
@@ -49,7 +48,8 @@ object Simulation {
     moves: java.io.File,
     distributionConstraints: java.io.File,
     moveType: MoveType,
-    rng: Random) = {
+    rng: Random,
+    visitor: Option[(World[Individual], BoundingBox, Option[(Int, Int)]) => Unit] = None) = {
 
     val healthCategory = generateHealthCategory(distributionConstraints)
     val interactionMap = generateInteractionMap(distributionConstraints)
@@ -82,7 +82,9 @@ object Simulation {
       Individual.locationV,
       Individual.homeV,
       Individual.socialCategoryV.get,
-      rng)
+      rng,
+      visitor
+    )
   }
 
   def simulate(
@@ -95,7 +97,8 @@ object Simulation {
     location: Lens[Individual, Location],
     home: Lens[Individual, Location],
     socialCategory: Individual => AggregatedSocialCategory,
-    rng: Random) = {
+    rng: Random,
+    visitor: Option[(World[Individual], BoundingBox, Option[(Int, Int)]) => Unit] = None) = {
 
     val moveMatrix = MoveMatrix.load(moves)
     def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => moveMatrix.get((i, j), timeSlice)
@@ -113,7 +116,8 @@ object Simulation {
         location = location,
         home = home.get,
         socialCategory = socialCategory,
-        rng = rng
+        rng = rng,
+        visitor = visitor
       )
     } finally moveMatrix.close()
   }
@@ -208,10 +212,7 @@ object Fit {
         rng = rng
       )
     )
-
   }
-
-  //def loadMatrix(data: File) = data.lines.drop(1)
 }
 
 object SimulationApp extends App {
