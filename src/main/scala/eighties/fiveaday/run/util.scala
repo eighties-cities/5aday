@@ -15,6 +15,10 @@ object util {
     def getValue(individual: Individual) = if (individual.healthy) 1.0 else 0.0
     worldMapper.mapGrayDiff(world1, world2, obb, width, height, file, getValue, atHome, textLeft, textRight, maxValue = maxValue, fraction = fraction, rescale = rescale)
   }
+  def mapOpinion(world: World[Individual], obb: BoundingBox, file: File, atHome: Boolean = true, textLeft: String, textRight: String, maxValue: Double = 1.0) = {
+    def getValue(individual: Individual) = individual.opinion
+    worldMapper.mapColorHSV(world, obb, file, getValue, atHome, textLeft, textRight, maxValue = maxValue)
+  }
 
   def writeState(world: World[Individual], file: File, deltaHealth: Option[Double] = None) = {
     file.parent.createDirectories
@@ -31,6 +35,7 @@ object util {
       case None => ""
       case Some(d) => s""",$d"""
     })
+    world
   }
 
 }

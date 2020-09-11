@@ -21,25 +21,16 @@ import java.io.File
 
 import better.files.Dsl.SymbolicOperations
 import better.files._
-import eighties.fiveaday.health._
 import eighties.fiveaday.observable
-import eighties.fiveaday.opinion.interchangeConviction
 import eighties.fiveaday.population._
-import eighties.fiveaday.run.Fit.fitness
-import eighties.h24.dynamic.MoveMatrix
-import eighties.h24.dynamic.MoveMatrix._
-import eighties.h24.generation._
 import eighties.h24.simulation.MoveType
 import eighties.h24.social._
 import eighties.h24.space._
-import eighties.h24.tools.Log.log
-import eighties.h24.{dynamic, space}
 import scopt.OParser
 
-import scala.annotation.tailrec
 import scala.util.Random
 
-object FitWithMap {
+object SimulationWithMap {
   def run(
     maxProbaToSwitch: Double,
     constraintsStrength: Double,
@@ -53,29 +44,6 @@ object FitWithMap {
     outputPath: java.io.File,
     moveType: MoveType,
     rng: Random) = {
-
-    log("loading population")
-    def worldFeature = WorldFeature.load(population) //generatedData / "population.bin")
-
-    val healthCategory = generateHealthCategory(distributionConstraints)
-    val interactionMap = generateInteractionMap(distributionConstraints)
-
-    log("compute bounding box")
-    val obbox = worldFeature.originalBoundingBox
-    val bbox = worldFeature.boundingBox
-    log(s"bounding box = ${obbox.minI} ${obbox.minJ} ${obbox.maxI} ${obbox.maxJ} ${obbox.sideI} ${obbox.sideI}")
-    log(s"bounding box = ${bbox.minI} ${bbox.minJ} ${bbox.maxI} ${bbox.maxJ} ${bbox.sideI} ${bbox.sideI}")
-
-    val moveMatrix = MoveMatrix.load(moves)
-    def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) =>  moveMatrix.get((i, j), timeSlice)
-
-    /*
-    def mapOpinion(world: World, bb: BoundingBox, file: File, atHome: Boolean = true) = {
-      def getValue(individual: Individual) = individual.opinion
-      val socialInequality = observable.socialInequality(world)
-      worldMapper.mapColorHSV(world, bb, file, getValue, atHome, socialInequality.toString)
-    }
-    */
     val categories = outputPath.toScala / "health.csv"
     categories.parent.createDirectories
     categories < "index,day,slice,effective,healthy,ratio,avgOpinion,socialInequality,e\n"
@@ -96,7 +64,6 @@ object FitWithMap {
           val avgOpinion = category.map(_.opinion.toDouble).sum / categorySize
           List(categorySize, nbHealthy, nbHealthy.toDouble / categorySize, avgOpinion)
         }
-
       val index = day * 3 + slice
       AggregatedSocialCategory.all.foreach { cat =>
         def individualOfCategory = World.individualsVector[Individual].get(world).filter(Individual.socialCategoryV.get(_) == cat)
@@ -108,57 +75,36 @@ object FitWithMap {
       def avgOpinion = World.individualsVector[Individual].get(world).map(_.opinion).sum / size
       file.toScala << s"""$index,$day,$slice,$size,$nbHealthy,$ratio,$avgOpinion,$socialInequality,$e"""
     }
-
     val parameters = outputPath.toScala / "parameters.csv"
     parameters < "maxProbaToSwitch,constraintsStrength,inertiaCoefficient,healthyDietReward,interpersonalInfluence\n"
     parameters << s"$maxProbaToSwitch,$constraintsStrength,$inertiaCoefficient,$healthyDietReward,$interpersonalInfluence"
-
-    @scala.annotation.tailrec
-    def simulateOneDay(world: space.World[Individual], obb: BoundingBox, bb: BoundingBox, timeSlices: List[TimeSlice], locatedCell: LocatedCell, day: Int, slice: Int = 0): World[Individual] =
-      timeSlices match {
-        case Nil => world
-        case time :: t =>
-          log("simulate day " + day +  ", time slice " + time)
-          def moved = moveType match {
-            case MoveType.Data => dynamic.moveInMoveMatrix(world, locatedCell, time, Individual.stableDestinationsV, Individual.locationV, Individual.homeV.get, Individual.socialCategoryV.get, rng)
-            case MoveType.Random => dynamic.randomMove(world, time, 1.0, Individual.locationV, Individual.stableDestinationsV, rng)
-            case MoveType.No => world
-          }
-          val convicted = interchangeConviction(
-            moved,
-            slice,
-            interactionMap,
-            maxProbaToSwitch = maxProbaToSwitch,
-            constraintsStrength = constraintsStrength,
-            inertiaCoefficient = inertiaCoefficient,
-            healthyDietReward = healthyDietReward,
-            interpersonalInfluence = interpersonalInfluence,
-            rng
-          )
-          val soc = observable.weightedInequalityRatioBySexAge(convicted)
-          val e = observable.erreygersE(convicted)
-          util.mapHealth(convicted, obb, bb.sideI, bb.sideJ, outputPath.toScala / "home" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", maxValue = 0.5, fraction = 5)
-          util.mapHealth(convicted, obb, bb.sideI, bb.sideJ, outputPath.toScala / "location" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", atHome = false, maxValue = 0.5, fraction = 5)
-          writeFileByCategory(day, slice, convicted, categories.toJava, soc, e)
-          //mapOpinion(convicted, bb, File(outputPath.toURI) / "opinion" / "home" / f"${day}%02d_${slice}.tiff")
-          //mapOpinion(convicted, bb, File(outputPath.toURI) / "opinion" / "location" / f"${day}%02d_${slice}.tiff", false)
-          simulateOneDay(convicted, obb, bb, t, locatedCell, day, slice + 1)
+    def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]): Unit = {
+      option match {
+        case Some((day, slice)) =>
+          val soc = observable.weightedInequalityRatioBySexAge(world)
+          val e = observable.erreygersE(world)
+          util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", maxValue = 0.5, fraction = 5)
+          util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "location" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", atHome = false, maxValue = 0.5, fraction = 5)
+          writeFileByCategory(day, slice, world, categories.toJava, soc, e)
+        case None =>
+          util.writeState(world, outputPath.toScala / "init.csv")
       }
-    def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
-    val populationWithMoves =  Simulation.initialiseWorld(worldFeature, moveType, Individual.locationV, Individual.homeV, Individual.socialCategoryV.get, buildIndividual, locatedCell, rng)
-    util.writeState(populationWithMoves, outputPath.toScala / "init.csv")
-    log("run simulation")
-    @tailrec def simulateAllDays(day: Int, world: World[Individual]): World[Individual] =
-      if(day == days) world
-      else {
-        def newWorld = simulateOneDay(world, obbox, bbox, timeSlices.toList, locatedCell, day)
-        simulateAllDays(day + 1, newWorld)
-      }
-    val worldAtTheEnd = simulateAllDays(0, populationWithMoves)
-    log("finished simulation for " + days + " days")
-    val deltaHealth = fitness(worldAtTheEnd)
-    util.writeState(worldAtTheEnd, outputPath.toScala / "final.csv", Some(deltaHealth))
-    deltaHealth
+    }
+    def worldAtTheEnd = Simulation.run(
+      maxProbaToSwitch = maxProbaToSwitch,
+      constraintsStrength = constraintsStrength,
+      inertiaCoefficient = inertiaCoefficient,
+      healthyDietReward = healthyDietReward,
+      interpersonalInfluence = interpersonalInfluence,
+      days = days,
+      population = population,
+      moves = moves,
+      distributionConstraints = distributionConstraints,
+      moveType = moveType,
+      rng = rng,
+      visitor = Some(visit)
+    )
+    util.writeState(worldAtTheEnd, outputPath.toScala / "final.csv")
   }
 }
 
@@ -180,7 +126,6 @@ object SimulationWithMapApp extends App {
     import builder._
     OParser.sequence(
       programName("5aday simulator with map"),
-      // option -f, --foo
       opt[File]('d', "distribution")
         .required()
         .action((x, c) => c.copy(distribution = Some(x)))
@@ -251,7 +196,7 @@ object SimulationWithMapApp extends App {
           case ObservedPop => config.population.get
         }
         val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap(parameterName)
-        FitWithMap.run(
+        SimulationWithMap.run(
           maxProbaToSwitch = maxProbaToSwitch,
           constraintsStrength = constraintsStrength,
           inertiaCoefficient = inertiaCoefficient,

@@ -20,22 +20,63 @@ package eighties.fiveaday.run
 import java.io.File
 
 import better.files._
-import eighties.h24.generation._
-import eighties.fiveaday.opinion.interchangeConviction
-import eighties.fiveaday.population._
-import eighties.h24.space._
 import eighties.fiveaday.observable
-import eighties.fiveaday.health._
-import eighties.fiveaday.run.Simulation.initialiseWorld
-import eighties.h24.dynamic.MoveMatrix
-import eighties.h24.dynamic.MoveMatrix.{LocatedCell, TimeSlice}
-import eighties.h24.simulation.{MoveType, simulateWorld}
+import eighties.fiveaday.population._
+import eighties.h24.simulation.MoveType
+import eighties.h24.space._
 import eighties.h24.tools.Log.log
 import scopt.OParser
 
 import scala.util.Random
-
-object SimulationWithBeforeAndAfterMaps extends App {
+object SimulationWithBeforeAndAfterMaps {
+  def run(
+           maxProbaToSwitch: Double,
+           constraintsStrength: Double,
+           inertiaCoefficient: Double,
+           healthyDietReward: Double,
+           interpersonalInfluence: Double,
+           days: Int,
+           population: java.io.File,
+           moves: java.io.File,
+           distributionConstraints: java.io.File,
+           outputPath: java.io.File,
+           moveType: MoveType,
+           rng: Random) = {
+    var initWorld: World[Individual] = null
+    def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]) = {
+      option match {
+        case Some((day, slice)) =>
+          if (day == days-1 && slice == 2) {
+            def soc = observable.weightedInequalityRatioBySexAge(world)
+            def initSoc = observable.weightedInequalityRatioBySexAge(initWorld)
+            util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "1_end.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
+            util.mapHealthDiff(initWorld, world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "2_diff.tiff", (soc - initSoc).toString, "", fraction = 8)
+          }
+        case None =>
+          initWorld = world
+          def soc = observable.weightedInequalityRatioBySexAge(world)
+          log(s"delta health: ${observable.deltaHealth(world)}")
+          log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
+          util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
+      }
+    }
+    Simulation.run(
+      maxProbaToSwitch = maxProbaToSwitch,
+      constraintsStrength = constraintsStrength,
+      inertiaCoefficient = inertiaCoefficient,
+      healthyDietReward = healthyDietReward,
+      interpersonalInfluence = interpersonalInfluence,
+      days = days,
+      population = population,
+      moves = moves,
+      distributionConstraints = distributionConstraints,
+      moveType = moveType,
+      rng = rng,
+      visitor = Some(visit)
+    )
+  }
+}
+object SimulationWithBeforeAndAfterMapsApp extends App {
 
   case class Config(
     population: Option[File] = None,
@@ -51,7 +92,6 @@ object SimulationWithBeforeAndAfterMaps extends App {
     import builder._
     OParser.sequence(
       programName("5aday simulator with map"),
-      // option -f, --foo
       opt[File]('d', "distribution")
         .required()
         .action((x, c) => c.copy(distribution = Some(x)))
@@ -86,10 +126,8 @@ object SimulationWithBeforeAndAfterMaps extends App {
     case Some(config) =>
       def run(scenario: Int, parameterName: String, seed: Long) {
         val rng = new Random(seed)
-
         val moves = config.moves.get
         val distributionConstraints = config.distribution.get
-
         val parameterMap = Map(
           ("environment", (0.08433503404492204, 0.14985650295919095, 0.7333227248982435, 0.03291749337039018, 0.23398559843386524)),
           ("partner", (0.029443016524418164, 0.05415637081735669, 0.20870694702023695, 0.10353942953774942, 0.7233067964061539)),
@@ -108,7 +146,6 @@ object SimulationWithBeforeAndAfterMaps extends App {
           (4, (ObservedPop, MoveType.Random)),
           (5, (ObservedPop, MoveType.Data))
         )
-
         val (pop, moveType) = scenarioMap(scenario)
         val moveTypeString = moveType match {
           case MoveType.Data => "ObservedMove"
@@ -119,88 +156,30 @@ object SimulationWithBeforeAndAfterMaps extends App {
           case RandomPop => "RandomPop"
           case ObservedPop => "ObservedPop"
         }
-
         val output = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed"
         output.createDirectories
-
         val worldFeatures = pop match {
           case RandomPop => config.randomPopulation.get
           case ObservedPop => config.population.get
         }
-
         val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap(parameterName)
-
-        val healthCategory = generateHealthCategory(distributionConstraints)
-        val interactionMap = generateInteractionMap(distributionConstraints)
-        def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
-        def exchange(moved: World[Individual], day: Int, slice: Int, rng: Random) = {
-          log(s"simulate day $day, slice $slice")
-          interchangeConviction(
-            moved,
-            slice,
-            interactionMap,
-            maxProbaToSwitch = maxProbaToSwitch,
-            constraintsStrength = constraintsStrength,
-            inertiaCoefficient = inertiaCoefficient,
-            healthyDietReward = healthyDietReward,
-            interpersonalInfluence = interpersonalInfluence,
-            rng
-          )
-        }
-
-        val days = 6
-        var initWorld: World[Individual] = null
-        def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]) = {
-          option match {
-            case Some((day, slice)) =>
-              log(s"\tday $day - slice $slice")
-              if (day == days-1 && slice == 2) {
-                def soc = observable.weightedInequalityRatioBySexAge(world)
-                def initSoc = observable.weightedInequalityRatioBySexAge(initWorld)
-                util.mapHealth(world, obb, world.sideI, world.sideJ, output / "home" / "1_end.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
-                util.mapHealthDiff(initWorld, world, obb, world.sideI, world.sideJ, output / "home" / "2_diff.tiff", (soc - initSoc).toString, "", fraction = 8)
-              }
-            case None =>
-              log("Init")
-              initWorld = world
-              def soc = observable.weightedInequalityRatioBySexAge(world)
-              log(s"delta health: ${observable.deltaHealth(world)}")
-              log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
-
-              util.mapHealth(world, obb, world.sideI, world.sideJ, output / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
-          }
-        }
-
-
-        val moveMatrix = MoveMatrix.load(moves)
-        def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => moveMatrix.get((i, j), timeSlice)
-        def worldFeature = WorldFeature.load(worldFeatures)
-
-        val world =
-          try {
-            simulateWorld[Individual](
-              days = days,
-              world = () => initialiseWorld(worldFeature, moveType, Individual.locationV, Individual.homeV, Individual.socialCategoryV.get, buildIndividual, locatedCell, rng),
-              bbox = worldFeature.originalBoundingBox,
-              locatedCell = locatedCell,
-              moveType = moveType,
-              exchange = exchange,
-              stableDestinations = Individual.stableDestinationsV,
-              location = Individual.locationV,
-              home = Individual.homeV.get,
-              socialCategory = Individual.socialCategoryV.get,
-              rng = rng,
-              visitor = Some(visit)
-            )
-          } finally moveMatrix.close()
-        log(s"finished simulation for $days days")
-        log(s"delta health: ${observable.deltaHealth(world)}")
-        log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
+        SimulationWithBeforeAndAfterMaps.run(
+          maxProbaToSwitch = maxProbaToSwitch,
+          constraintsStrength = constraintsStrength,
+          inertiaCoefficient = inertiaCoefficient,
+          healthyDietReward = healthyDietReward,
+          interpersonalInfluence = interpersonalInfluence,
+          days = 6,
+          population = worldFeatures,
+          moves = moves,
+          distributionConstraints = distributionConstraints,
+          output.toJava,
+          moveType,
+          rng = rng
+        )
       }
-
       val parameterName = "hope2020"
       val seed = config.seed.getOrElse(42L)
-
       if (config.scenario.isDefined) run(config.scenario.get, parameterName, seed)
       else {
         for (scenario <- 1 to 5) run(scenario, parameterName, seed)
