@@ -20,7 +20,6 @@ package eighties.fiveaday
 import better.files._
 import com.github.tototoshi.csv.{CSVParser, defaultCSVFormat}
 import eighties.fiveaday.population.{ChangeConstraints, HealthCategory, Healthy, Unhealthy}
-import eighties.h24.generation.RasterVariate
 import eighties.h24.social.{AggregatedAge, AggregatedEducation, AggregatedSocialCategory, Sex}
 import eighties.h24.tools.random.multinomial
 

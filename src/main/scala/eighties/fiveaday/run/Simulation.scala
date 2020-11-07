@@ -18,7 +18,7 @@
 package eighties.fiveaday.run
 
 import java.io.File
-
+import better.files.{File => ScalaFile, _}
 import eighties.fiveaday.health._
 import eighties.fiveaday.observable
 import eighties.fiveaday.opinion.interchangeConviction
@@ -103,7 +103,6 @@ object Simulation {
     val moveMatrix = MoveMatrix.load(moves)
     def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => moveMatrix.get((i, j), timeSlice)
     def worldFeature = WorldFeature.load(population)
-
     try {
       simulateWorld(
         days = days,
@@ -133,7 +132,6 @@ object Simulation {
     locatedCell: LocatedCell,
     rng: Random) = {
     def world = generateWorld(worldFeature.individualFeatures, buildIndividual, location, home, rng)
-
     moveType match {
       case MoveType.Data => assignRandomDayLocation(world, locatedCell, Individual.dayDestinationV, location.get, home.get, socialCategory, rng)
       case MoveType.Random => world
@@ -182,7 +180,7 @@ object Simulation {
 
 object Fit {
 
-  def fitness(world: World[Individual]) = observable.deltaHealth(world)
+  def fitness(world: World[Individual], file: ScalaFile) = observable.deltaHealthByCategory(world, file)
 
   def run(
     maxProbaToSwitch: Double,
@@ -210,7 +208,7 @@ object Fit {
         distributionConstraints = distributionConstraints,
         moveType = moveType,
         rng = rng
-      )
+      ),distributionConstraints.toScala
     )
   }
 }
@@ -262,7 +260,8 @@ object SimulationApp extends App {
       val parameterSets =
         Vector(
           (0.8507843893208267, 0.45377746673575825, 0.6585498777924014, 0.210784861364803, 0.2589547233574915),
-          (0.8391008302839391, 0.4281592636895263, 0.6548785686047478, 0.2147412463304806, 0.4204431246470749)
+          (0.8391008302839391, 0.4281592636895263, 0.6548785686047478, 0.2147412463304806, 0.4204431246470749),
+          (0.010216504, 0.0, 0.806896825, 0.767755389, 0.790965130)
         )
 
       val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterSets(0)
@@ -282,7 +281,8 @@ object SimulationApp extends App {
           rng = rng
         )
 
-      log("delta health: " + observable.deltaHealth(world))
+      log("population " + world.individuals.size)
+      log("delta health: " + observable.deltaHealthByCategory(world, distributionConstraints.toScala))
       log("social inequality: " + observable.weightedInequalityRatioBySexAge(world))
     case _ =>
   }

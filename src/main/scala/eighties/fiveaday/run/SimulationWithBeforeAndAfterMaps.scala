@@ -18,6 +18,7 @@
 package eighties.fiveaday.run
 
 import java.io.File
+import better.files.{File => ScalaFile, _}
 
 import better.files._
 import eighties.fiveaday.observable
@@ -55,7 +56,7 @@ object SimulationWithBeforeAndAfterMaps {
         case None =>
           initWorld = world
           def soc = observable.weightedInequalityRatioBySexAge(world)
-          log(s"delta health: ${observable.deltaHealth(world)}")
+          log(s"delta health: ${observable.deltaHealthByCategory(world, distributionConstraints.toScala)}")
           log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
           util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
       }

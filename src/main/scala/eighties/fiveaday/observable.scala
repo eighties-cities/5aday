@@ -70,20 +70,12 @@ object observable {
     new HealthCategories(numberOfHigh, numberOfHighHealthy, numberOfMiddle, numberOfMiddleHealthy, numberOfLow, numberOfLowHealthy)
   }
   def erreygersE(world: World[Individual]) = {
-    val all = world.individuals.length
-//    val high = World.individualsVector.get(world).filter(i => Individual.education.get(i) == AggregatedEducation.High)
-//    val middle = World.individualsVector.get(world).filter(i => Individual.education.get(i) == AggregatedEducation.Middle)
-//    val low = World.individualsVector.get(world).filter(i => Individual.education.get(i) == AggregatedEducation.Low)
-//    val numberOfHighHealthy = high.count(_.healthy)
-//    val numberOfHigh = high.length
-//    val numberOfMiddleHealthy = middle.count(_.healthy)
-//    val numberOfMiddle = middle.length
-//    val numberOfLowHealthy = low.count(_.healthy)
-//    val numberOfLow = low.length
-    erreygersE_(getCategories(world), all)
+    erreygersE_(getCategories(world), world.individuals.length)
   }
 
-  def numberOfHealthy(world: World[Individual]) = world.individuals.count(Individual.healthy.get)
+  // def numberOfHealthy(world: World[Individual]) = world.individuals.count(Individual.healthy.get)
+  def numberOfHealthy(world: World[Individual]) = world.individuals.count(_.healthy)
+  def numberOfHealthyV(world: Vector[Individual]) = world.count(_.healthy)
 
   def weightedInequality(numberOfHighHealthy:Double, numberOfHigh:Double, numberOfLowHealthy:Double, numberOfLow:Double, total: Double) = {
     val propHighHealthy = if (numberOfHighHealthy == 0) (numberOfHighHealthy + 1) / (numberOfHigh + 1) else numberOfHighHealthy / numberOfHigh
@@ -157,7 +149,6 @@ object observable {
 
     def filterIndividuals(category: AggregatedSocialCategory) =
       World.individualsVector[Individual].get(world).filter(i => Individual.socialCategoryV.get(i) == category)
-
     val totalNumberOfIndividual = world.individuals.length
 
     val bySEA =
@@ -175,21 +166,27 @@ object observable {
 
 
   def healthyByCategory(world: World[Individual]) = {
-
     def filterIndividuals(category: AggregatedSocialCategory) =
       World.individualsVector[Individual].get(world).filter(i => Individual.socialCategoryV.get(i) == category)
 
 //    val totalNumberOfIndividual = world.individuals.length
-
-    for {
-      category <- AggregatedSocialCategory.all
-    } yield {
-      def indiviualsOfCategory = filterIndividuals(category)
-      def numberOfHealthyIndividuals = indiviualsOfCategory.count(i => Individual.healthy.get(i)) + 1
-//      println(s"Category $category => ${indiviualsOfCategory.size} / $numberOfHealthyIndividuals")
-//      val numberOfIndividuals = indiviualsOfCategory.size + 1
-      numberOfHealthyIndividuals.toDouble
-    }
+    {
+      for {
+        category <- AggregatedSocialCategory.all
+      } yield {
+//        def indiviualsOfCategory = filterIndividuals(category)
+//        def numberOfHealthyIndividuals = indiviualsOfCategory.count(i => Individual.healthy.get(i)) + 1
+//        def individualsOfCategory = sexAgeEducation(category.sex, category.age, category.education)(world)
+        def individualsOfCategory = World.individualsVector[Individual].get(world).filter(Individual.socialCategoryV.get(_) == category)
+        def numberOfHealthyIndividuals = numberOfHealthyV(individualsOfCategory)
+//        println(s"Category $category => ${individualsOfCategory.size} / $numberOfHealthyIndividuals")
+//        val indiviualsOfCategory2 = filterIndividuals(category)
+//        val numberOfHealthyIndividuals2 = indiviualsOfCategory2.count(i => Individual.healthy.get(i))
+//        val numberOfIndividuals2 = indiviualsOfCategory2.size
+//        println(s"\t$numberOfIndividuals2 / $numberOfHealthyIndividuals2")
+        category -> numberOfHealthyIndividuals.toDouble
+      }
+    }.toMap
   }
 
   def readConso2008(file: File) = {
@@ -216,7 +213,6 @@ object observable {
       for {
         category <- AggregatedSocialCategory.all
       } yield category -> map(category)
-
     byCat.toMap
   }
 
@@ -278,32 +274,44 @@ object observable {
         scala.math.pow(simHealthyRatio - proportionOfHealthyAllEdu, 2.0) * groupWeight
     }.toArray.sum
   }
-
-  def deltaHealth(world: World[Individual]) = {
-    val numberOfHeathy2008 = Seq(
-      36305.538,//11276.434,
-      8805.884,//7999.845,
-      11353.824,//9858.309,
-      91006.248,//88032.482,
-      73594.333,//73687.556,
-      103712.167,//103744.666,
-      76025.221,//74013.450,
-      62327.913,//62604.347,
-      53876.324,//54322.470,
-      61716.522,//18589.743,
-      18455.859,//16630.094,
-      8373.215,//7126.289,
-      120970.496,//116803.309,
-      96996.636,//97040.503,
-      95648.246,//95607.811,
-      120552.568,//117412.814,
-      125029.552,//125236.552,
-      88817.1//89520.300
-    )
-    (numberOfHeathy2008 zip healthyByCategory(world)).map { case(x, y) =>
-//      println(s"$x == $y")
-      math.abs(x - y) }.sum
+  def deltaHealthByCategory(world: World[Individual], file: File) = {
+    lazy val simulated = healthyByCategory(world)
+    def survey = behaviourBySocialCategoryInData(file, world)
+    def numberOfIndividuals(category: AggregatedSocialCategory) = World.individualsVector[Individual].get(world).count(i => Individual.socialCategoryV.get(i) == category)
+    survey.map{
+      case (cat, propOfHealthy) =>
+        val sim = simulated(cat)
+        val num = numberOfIndividuals(cat)
+        println(s"${propOfHealthy * num} -- $sim => ${math.abs(propOfHealthy * num - sim)}")
+        math.abs(propOfHealthy * num - sim)
+    }.toArray.sum
   }
+
+//  def deltaHealth(world: World[Individual]) = {
+//    val numberOfHeathy2008 = Seq(
+//      36305.538,//11276.434,
+//      8805.884,//7999.845,
+//      11353.824,//9858.309,
+//      91006.248,//88032.482,
+//      73594.333,//73687.556,
+//      103712.167,//103744.666,
+//      76025.221,//74013.450,
+//      62327.913,//62604.347,
+//      53876.324,//54322.470,
+//      61716.522,//18589.743,
+//      18455.859,//16630.094,
+//      8373.215,//7126.289,
+//      120970.496,//116803.309,
+//      96996.636,//97040.503,
+//      95648.246,//95607.811,
+//      120552.568,//117412.814,
+//      125029.552,//125236.552,
+//      88817.1//89520.300
+//    )
+//    (numberOfHeathy2008 zip healthyByCategory(world).values).map { case(x, y) =>
+//      println(s"$x -- $y => ${math.abs(x - y)}")
+//      math.abs(x - y) }.sum
+//  }
 
   def deltaInequality(world: World[Individual], file: File, date: Int) = {
     lazy val simulated = inequalityRatioBySexAge(world)
