@@ -29,25 +29,25 @@ import scala.util.Random
 object health {
 
   object HealthMatrix {
-    def headers(file: File) = {
+    def headers(file: File): Map[String, Int] = {
       val parser = new CSVParser(defaultCSVFormat)
       parser.parseLine(file.lines.head).get.zipWithIndex.toMap
     }
 
-    def sex(v: String) =
+    def sex(v: String): Sex =
       v match {
         case "1" => Sex.Male
         case "2" => Sex.Female
       }
 
-    def age(v: String) =
+    def age(v: String): AggregatedAge =
       v match {
         case "1" => AggregatedAge.Age1
         case "2" => AggregatedAge.Age2
         case "3" => AggregatedAge.Age3
       }
 
-    def education(v: String) =
+    def education(v: String): AggregatedEducation =
       v match {
         case "1" => AggregatedEducation.Low
         case "2" => AggregatedEducation.Middle
@@ -109,7 +109,7 @@ object health {
     lunchInteraction: Double,
     dinnerInteraction: Double)
 
-  def generateInteractionMap(file: java.io.File) = {
+  def generateInteractionMap(file: java.io.File): Map[AggregatedSocialCategory, Interactions] = {
     import HealthMatrix._
     val header = headers(file.toScala)
     val parser = new CSVParser(defaultCSVFormat)

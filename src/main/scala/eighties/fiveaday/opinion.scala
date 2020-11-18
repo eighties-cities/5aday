@@ -1,13 +1,10 @@
 package eighties.fiveaday
 
-import eighties.h24.generation._
-import org.apache.commons.math3.analysis.function.Gaussian
-import org.apache.commons.math3.util.FastMath
+import eighties.fiveaday.health._
 import eighties.fiveaday.population._
-import eighties.h24.space._
-import health._
-
 import eighties.h24.social._
+import eighties.h24.space._
+import org.apache.commons.math3.util.FastMath
 
 import scala.util.Random
 

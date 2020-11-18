@@ -26,6 +26,7 @@ import eighties.fiveaday.population._
 import eighties.h24.simulation.MoveType
 import eighties.h24.social._
 import eighties.h24.space._
+import eighties.h24.tools.Log.log
 import scopt.OParser
 
 import scala.util.Random
@@ -43,7 +44,7 @@ object SimulationWithMap {
     distributionConstraints: java.io.File,
     outputPath: java.io.File,
     moveType: MoveType,
-    rng: Random) = {
+    rng: Random): World[Individual] = {
     val categories = outputPath.toScala / "health.csv"
     categories.parent.createDirectories
     categories < "index,day,slice,effective,healthy,ratio,avgOpinion,socialInequality,e\n"
@@ -196,7 +197,7 @@ object SimulationWithMapApp extends App {
           case ObservedPop => config.population.get
         }
         val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap(parameterName)
-        SimulationWithMap.run(
+        val world = SimulationWithMap.run(
           maxProbaToSwitch = maxProbaToSwitch,
           constraintsStrength = constraintsStrength,
           inertiaCoefficient = inertiaCoefficient,
@@ -210,6 +211,9 @@ object SimulationWithMapApp extends App {
           moveType,
           rng = rng
         )
+        log("population " + world.individuals.length)
+        log("delta health: " + observable.deltaHealthByCategory(world, distributionConstraints.toScala))
+        log("social inequality: " + observable.weightedInequalityRatioBySexAge(world))
       }
       val parameterName = "summer2020"
       val seed = config.seed.getOrElse(42L)

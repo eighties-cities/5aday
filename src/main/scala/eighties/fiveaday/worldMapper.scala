@@ -17,13 +17,13 @@ import eighties.h24.tools.math._
 
 object worldMapper {
   val format = new GeoTiffFormat()
-  def cat(ind: Individual) = Individual.education.get(ind) match {
+  def cat(ind: Individual): Int = Individual.education.get(ind) match {
     case AggregatedEducation.Low => 0
     case AggregatedEducation.Middle => 1
     case AggregatedEducation.High => 2
   }
   def mapRGB(world: space.World[Individual], file: File, getValue: Individual => Int = cat,
-             cellSize: Int = 1000, crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
+             cellSize: Int = 1000, crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")): Unit = {
     val minX = world.originI
     val minY = world.originJ
     val width = world.sideI
@@ -67,7 +67,7 @@ object worldMapper {
               rescale: Boolean = true,
               fraction: Int = 4,
               cellSize: Int = 1000,
-              crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
+              crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")): Unit = {
     val index = space.Index.indexIndividuals(world, if (atHome) Individual.homeV.get else Individual.locationV.get)
     val mappedValues = index.cells.map(_.map(individuals => if (filter(individuals.length) && individuals.nonEmpty) Some(aggregator(individuals.map(getValue))) else None))
     mapGrayValues(
@@ -102,7 +102,7 @@ object worldMapper {
               rescale: Boolean = true,
               fraction: Int = 4,
               cellSize: Int = 1000,
-              crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
+              crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")): Unit = {
     val index1 = space.Index.indexIndividuals(world1, if (atHome) Individual.homeV.get else Individual.locationV.get)
     val mappedValues1 = index1.cells.map(_.map(individuals => if (filter(individuals.length) && individuals.nonEmpty) Some(aggregator(individuals.map(getValue))) else None))
     val index2 = space.Index.indexIndividuals(world2, if (atHome) Individual.homeV.get else Individual.locationV.get)
@@ -144,7 +144,7 @@ object worldMapper {
               rescale: Boolean = true,
               fraction: Int = 4,
               cellSize: Int = 1000,
-              crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
+              crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")): Unit = {
     val rangeValues = maxValue - minValue
     val pixelSize = 10
     val bufferedImage = new BufferedImage(width*pixelSize, height*pixelSize, BufferedImage.TYPE_INT_ARGB)
@@ -201,7 +201,7 @@ object worldMapper {
                   minValue: Double = 0.0,
                   maxValue: Double = 1.0,
                   cellSize: Int = 1000,
-                  crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
+                  crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")): Unit = {
     val minX = boundingBox.minI
     val minY = boundingBox.minJ
     val width = boundingBox.sideI
@@ -275,7 +275,7 @@ object worldMapper {
                   minValue: Double = 0.0,
                   maxValue: Double = 1.0,
                   cellSize: Int = 1000,
-                  crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")) = {
+                  crs: CoordinateReferenceSystem = CRS.decode("EPSG:3035")): Unit = {
     val minX = boundingBox.minI
     val minY = boundingBox.minJ
     val width = boundingBox.sideI

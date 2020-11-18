@@ -24,7 +24,7 @@ import eighties.h24.space._
 import monocle.function.all._
 import monocle.macros.Lenses
 import eighties.h24.social._
-
+import monocle.{Iso, PLens}
 
 import scala.util.Random
 
@@ -39,25 +39,25 @@ object population {
   object Unhealthy extends Behaviour
 
   object Behaviour {
-    def fromBoolean(b: Boolean) = if(b) Healthy else Unhealthy
-    def toBoolean(b: Behaviour) =
+    def fromBoolean(b: Boolean): Behaviour = if(b) Healthy else Unhealthy
+    def toBoolean(b: Behaviour): Boolean =
       b match {
         case Healthy => true
         case Unhealthy => false
       }
 
-    def booleanIso = monocle.Iso(fromBoolean)(toBoolean)
+    def booleanIso: Iso[Boolean, Behaviour] = monocle.Iso(fromBoolean)(toBoolean)
   }
 
   object ChangeConstraints {
-    lazy val all =
+    lazy val all: Array[ChangeConstraints] =
       for {
         habit <- Array(true, false)
         budget <- Array(true, false)
         time <- Array(true, false)
       } yield ChangeConstraints(habit, budget, time)
 
-    def shortToChangeConstraintsIso = monocle.Iso[Byte, ChangeConstraints](i => all(i - Byte.MinValue))(c => (all.indexOf(c) + Byte.MinValue).toByte)
+    def shortToChangeConstraintsIso: Iso[AggregatedAge, ChangeConstraints] = monocle.Iso[Byte, ChangeConstraints](i => all(i - Byte.MinValue))(c => (all.indexOf(c) + Byte.MinValue).toByte)
   }
 
   @Lenses case class ChangeConstraints(habit: Boolean, budget: Boolean, time: Boolean)
@@ -111,33 +111,33 @@ object population {
         Location.toIndex(location),
         dayDestination.map(Location.toIndex).getOrElse(Location.noLocationIndex))
 
-    def arrayMapIso = monocle.Iso[Array[(TimeSlice, Int)], Map[TimeSlice, Int]](_.toMap)(_.toArray)
+    def arrayMapIso: Iso[Array[(TimeSlice, Int)], Map[TimeSlice, Int]] = monocle.Iso[Array[(TimeSlice, Int)], Map[TimeSlice, Int]](_.toMap)(_.toArray)
 
-    def locationV = Individual.location composeIso Location.indexIso
-    def homeV = Individual.home composeIso Location.indexIso
-    def socialCategoryV = Individual.socialCategory composeIso AggregatedSocialCategory.shortAggregatedSocialCategoryIso
+    def locationV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Individual.location composeIso Location.indexIso
+    def homeV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Individual.home composeIso Location.indexIso
+    def socialCategoryV: PLens[Individual, Individual, AggregatedSocialCategory, AggregatedSocialCategory] = Individual.socialCategory composeIso AggregatedSocialCategory.shortAggregatedSocialCategoryIso
 
-    def arrayToMapOfStableLocation(array: Array[Short]) =
+    def arrayToMapOfStableLocation(array: Array[Short]): Map[TimeSlice, (Int, Int)] =
       (timeSlices zip array).filter(_._2 != Location.noLocationIndex).map { case(a, b) => a -> Location.fromIndex(b) }.toMap
     
-    def mapOfStableLocationToArray(map: Map[TimeSlice, Location]) = timeSlices.map(t => map.get(t).map(Location.toIndex).getOrElse(Location.noLocationIndex)).toArray
+    def mapOfStableLocationToArray(map: Map[TimeSlice, Location]): Array[ShortAggregatedSocialCategory] = timeSlices.map(t => map.get(t).map(Location.toIndex).getOrElse(Location.noLocationIndex)).toArray
 
-    def timeSlicesMapIso = monocle.Iso[Array[Short], Map[TimeSlice, Location]] (arrayToMapOfStableLocation) (mapOfStableLocationToArray)
+    def timeSlicesMapIso: Iso[Array[ShortAggregatedSocialCategory], Map[TimeSlice, (Int, Int)]] = monocle.Iso[Array[Short], Map[TimeSlice, Location]] (arrayToMapOfStableLocation) (mapOfStableLocationToArray)
 
-    def stableDestinationsV(i: Individual) = timeSlicesMapIso.get(Array(i.home, i.dayDestination, Location.noLocationIndex))
-    def dayDestinationV = Individual.dayDestination composeIso Location.indexIso
+    def stableDestinationsV(i: Individual): Map[TimeSlice, (Int, Int)] = timeSlicesMapIso.get(Array(i.home, i.dayDestination, Location.noLocationIndex))
+    def dayDestinationV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Individual.dayDestination composeIso Location.indexIso
 
-    def education = socialCategoryV composeLens AggregatedSocialCategory.education
-    def age = socialCategoryV composeLens AggregatedSocialCategory.age
-    def sex = socialCategoryV composeLens AggregatedSocialCategory.sex
-    def i = Individual.locationV composeLens first
-    def j = Individual.locationV composeLens second
+    def education: PLens[Individual, Individual, AggregatedEducation, AggregatedEducation] = socialCategoryV composeLens AggregatedSocialCategory.education
+    def age: PLens[Individual, Individual, AggregatedAge, AggregatedAge] = socialCategoryV composeLens AggregatedSocialCategory.age
+    def sex: PLens[Individual, Individual, Sex, Sex] = socialCategoryV composeLens AggregatedSocialCategory.sex
+    def i: PLens[Individual, Individual, Int, Int] = Individual.locationV composeLens first
+    def j: PLens[Individual, Individual, Int, Int] = Individual.locationV composeLens second
 
-    def changeConstraintsV = changeConstraints composeIso ChangeConstraints.shortToChangeConstraintsIso
-    def behaviourV = healthy composeIso Behaviour.booleanIso
-    def budget = changeConstraintsV composeLens ChangeConstraints.budget
-    def habit = changeConstraintsV composeLens ChangeConstraints.habit
-    def time = changeConstraintsV composeLens ChangeConstraints.time
+    def changeConstraintsV: PLens[Individual, Individual, ChangeConstraints, ChangeConstraints] = changeConstraints composeIso ChangeConstraints.shortToChangeConstraintsIso
+    def behaviourV: PLens[Individual, Individual, Behaviour, Behaviour] = healthy composeIso Behaviour.booleanIso
+    def budget: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens ChangeConstraints.budget
+    def habit: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens ChangeConstraints.habit
+    def time: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens ChangeConstraints.time
   }
 
   @Lenses case class Individual(

@@ -1,10 +1,5 @@
 package eighties
 
-import monocle.Iso
-
-import scala.annotation.tailrec
-import scala.util.Random
-
 /**
   * Created by Romain Reuillon on 11/05/16.
   *
@@ -27,8 +22,8 @@ package object fiveaday {
 
 
   implicit class SeqDoubleDecorator(s: Seq[Double]) {
-    def average = s.sum / s.size
-    def meanSquaredError = {
+    def average: Double = s.sum / s.size
+    def meanSquaredError: Double = {
       val avg = s.average
       s.map { v ⇒ math.pow(v - avg, 2) }.average
     }

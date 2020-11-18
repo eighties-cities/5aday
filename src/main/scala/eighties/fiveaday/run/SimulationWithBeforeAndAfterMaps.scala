@@ -18,7 +18,6 @@
 package eighties.fiveaday.run
 
 import java.io.File
-import better.files.{File => ScalaFile, _}
 
 import better.files._
 import eighties.fiveaday.observable
@@ -42,9 +41,9 @@ object SimulationWithBeforeAndAfterMaps {
            distributionConstraints: java.io.File,
            outputPath: java.io.File,
            moveType: MoveType,
-           rng: Random) = {
+           rng: Random): World[Individual] = {
     var initWorld: World[Individual] = null
-    def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]) = {
+    def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]): Unit = {
       option match {
         case Some((day, slice)) =>
           if (day == days-1 && slice == 2) {

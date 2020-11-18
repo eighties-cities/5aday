@@ -27,7 +27,7 @@ import eighties.h24.space._
 
 object observable {
 
-  def byEducation[T](b: Vector[Float] => T)(world: World[Individual]) =
+  def byEducation[T](b: Vector[Float] => T)(world: World[Individual]): Array[(AggregatedAge, T)] =
       for {
         ed <- AggregatedEducation.all
         level = World.individualsVector[Individual].get(world).filter(i => Individual.education.get(i)  == ed)
@@ -39,14 +39,14 @@ object observable {
 //    byEducation[Vector[Float]](b => Vector(mean(b), scala.math.sqrt(variance(DenseVector(b: _*))), median(DenseVector(b: _*))))(world)
 //  }
 
-  def filterIndividualBySexAge(sex: Sex, age: AggregatedAge)(world: World[Individual]) =
+  def filterIndividualBySexAge(sex: Sex, age: AggregatedAge)(world: World[Individual]): World[Individual] =
     World.individuals[Individual].modify(_.filter(i => Individual.sex.get(i) == sex && Individual.age.get(i) == age))(world)
 
-  def sexAgeEducation(sex: Sex, age: AggregatedAge, education: AggregatedEducation)(world: World[Individual]) =
+  def sexAgeEducation(sex: Sex, age: AggregatedAge, education: AggregatedEducation)(world: World[Individual]): World[Individual] =
     World.individuals[Individual].modify(_.filter(i => Individual.sex.get(i) == sex && Individual.age.get(i) == age && Individual.education.get(i) == education))(world)
 
   sealed class HealthCategories(val numberOfHigh: Int, val numberOfHighHealthy: Int, val numberOfMiddle: Int, val numberOfMiddleHealthy: Int, val numberOfLow: Int, val numberOfLowHealthy: Int)
-  /*
+  /**
   E from Erreygers, G. 2009. "Correcting the concentration index, Journal of Health Economics 28:521-524.
    */
   def erreygersE_(cat: HealthCategories, n: Int): Double = {
@@ -54,10 +54,10 @@ object observable {
     def rankMiddle = (2 * cat.numberOfHigh + cat.numberOfMiddle).toDouble / 2
     def rankLow = (2 * cat.numberOfHigh + 2 * cat.numberOfMiddle + cat.numberOfLow).toDouble / 2
     def z(rank: Double) = (n + 1).toDouble / 2 - rank
-    8 * (z(rankLow) * cat.numberOfLowHealthy + z(rankMiddle) * cat.numberOfMiddleHealthy + z(rankHigh) * cat.numberOfHighHealthy).toDouble / math.pow(n, 2)
+    8 * (z(rankLow) * cat.numberOfLowHealthy + z(rankMiddle) * cat.numberOfMiddleHealthy + z(rankHigh) * cat.numberOfHighHealthy) / math.pow(n, 2)
   }
 
-  def getCategories(world: World[Individual]) = {
+  def getCategories(world: World[Individual]): HealthCategories = {
     val high = World.individualsVector[Individual].get(world).filter(i => Individual.education.get(i) == AggregatedEducation.High)
     val middle = World.individualsVector[Individual].get(world).filter(i => Individual.education.get(i) == AggregatedEducation.Middle)
     val low = World.individualsVector[Individual].get(world).filter(i => Individual.education.get(i) == AggregatedEducation.Low)
@@ -69,20 +69,20 @@ object observable {
     val numberOfLow = low.length
     new HealthCategories(numberOfHigh, numberOfHighHealthy, numberOfMiddle, numberOfMiddleHealthy, numberOfLow, numberOfLowHealthy)
   }
-  def erreygersE(world: World[Individual]) = {
+  def erreygersE(world: World[Individual]): Double = {
     erreygersE_(getCategories(world), world.individuals.length)
   }
 
   // def numberOfHealthy(world: World[Individual]) = world.individuals.count(Individual.healthy.get)
-  def numberOfHealthy(world: World[Individual]) = world.individuals.count(_.healthy)
-  def numberOfHealthyV(world: Vector[Individual]) = world.count(_.healthy)
+  def numberOfHealthy(world: World[Individual]): Int = world.individuals.count(_.healthy)
+  def numberOfHealthyV(world: Vector[Individual]): Int = world.count(_.healthy)
 
-  def weightedInequality(numberOfHighHealthy:Double, numberOfHigh:Double, numberOfLowHealthy:Double, numberOfLow:Double, total: Double) = {
+  def weightedInequality(numberOfHighHealthy:Double, numberOfHigh:Double, numberOfLowHealthy:Double, numberOfLow:Double, total: Double): Double = {
     val propHighHealthy = if (numberOfHighHealthy == 0) (numberOfHighHealthy + 1) / (numberOfHigh + 1) else numberOfHighHealthy / numberOfHigh
     val propLowHealthy = if (numberOfLowHealthy == 0) (numberOfLowHealthy + 1) / (numberOfLow + 1) else numberOfLowHealthy / numberOfLow
     (propHighHealthy / propLowHealthy) * total
   }
-  def weightedInequalityRatioBySexAge(world: World[Individual]) = {
+  def weightedInequalityRatioBySexAge(world: World[Individual]): Double = {
     val all = world.individuals.length
     val bySA =
       for {
@@ -103,7 +103,7 @@ object observable {
     bySA.sum / all
   }
 
-  def inequalityRatioBySexAge(world: World[Individual]) = {
+  def inequalityRatioBySexAge(world: World[Individual]): Map[(AggregatedAge, AggregatedAge), (Double, Int)] = {
     def numberOfHealthy(world: World[Individual], education: AggregatedEducation) = world.individuals.count(i => Individual.healthy.get(i) && Individual.education.get(i) == education)
     def numberOfIndividuals(world: World[Individual], education: AggregatedEducation) = world.individuals.count(i => Individual.education.get(i) == education)
 
@@ -127,7 +127,7 @@ object observable {
     bySEA.toMap
   }
 
-  def healthyRatioBySexAge(world: World[Individual]) = {
+  def healthyRatioBySexAge(world: World[Individual]): Map[(AggregatedAge, AggregatedAge), (Double, Double)] = {
     val totalNumberOfIndividual = world.individuals.length
 
     val bySEA =
@@ -145,7 +145,7 @@ object observable {
   }
 
 
-  def healthyRatioByCategory(world: World[Individual]) = {
+  def healthyRatioByCategory(world: World[Individual]): Map[AggregatedSocialCategory, (Double, Double)] = {
 
     def filterIndividuals(category: AggregatedSocialCategory) =
       World.individualsVector[Individual].get(world).filter(i => Individual.socialCategoryV.get(i) == category)
@@ -165,7 +165,7 @@ object observable {
   }
 
 
-  def healthyByCategory(world: World[Individual]) = {
+  def healthyByCategory(world: World[Individual]): Map[AggregatedSocialCategory, Double] = {
     def filterIndividuals(category: AggregatedSocialCategory) =
       World.individualsVector[Individual].get(world).filter(i => Individual.socialCategoryV.get(i) == category)
 
@@ -189,7 +189,7 @@ object observable {
     }.toMap
   }
 
-  def readConso2008(file: File) = {
+  def readConso2008(file: File): Map[AggregatedSocialCategory, Double] = {
     import HealthMatrix._
 
     val parser = new CSVParser(defaultCSVFormat)
@@ -265,7 +265,7 @@ object observable {
     }.toMap
   }
 
-  def deltaHealthByAgeSex(world: World[Individual], file: File, date: Int) = {
+  def deltaHealthByAgeSex(world: World[Individual], file: File, date: Int): Double = {
     lazy val simulated = healthyRatioBySexAge(world)
     def survey = behaviourBySexAgeInData(file, date, world)
     survey.map{
@@ -274,7 +274,7 @@ object observable {
         scala.math.pow(simHealthyRatio - proportionOfHealthyAllEdu, 2.0) * groupWeight
     }.toArray.sum
   }
-  def deltaHealthByCategory(world: World[Individual], file: File) = {
+  def deltaHealthByCategory(world: World[Individual], file: File): Double = {
     lazy val simulated = healthyByCategory(world)
     def survey = behaviourBySocialCategoryInData(file, world)
     def numberOfIndividuals(category: AggregatedSocialCategory) = World.individualsVector[Individual].get(world).count(i => Individual.socialCategoryV.get(i) == category)
@@ -313,7 +313,7 @@ object observable {
 //      math.abs(x - y) }.sum
 //  }
 
-  def deltaInequality(world: World[Individual], file: File, date: Int) = {
+  def deltaInequality(world: World[Individual], file: File, date: Int): Double = {
     lazy val simulated = inequalityRatioBySexAge(world)
     def survey = inequalityBySexAgeInData(file, date, world)
     survey.map{
@@ -325,7 +325,7 @@ object observable {
   }
 
 
-  def saveEffectivesAsCSV(world: World[Individual], output: File) = {
+  def saveEffectivesAsCSV(world: World[Individual], output: File): Unit = {
     output.parent.createDirectories()
     output.delete(swallowIOExceptions = true)
 

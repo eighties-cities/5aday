@@ -4,9 +4,11 @@ A multi agent model to simulate the effects of social and temporal segregation o
 
 ## Install
 
-You first neet to install h24 (sbt publishLocal)
+You first need to install h24 (sbt publishLocal).
 Then:
+```shell script
 sbt osgiBundle
+```
 
 ## Run a single simulation
 

@@ -49,7 +49,7 @@ object Simulation {
     distributionConstraints: java.io.File,
     moveType: MoveType,
     rng: Random,
-    visitor: Option[(World[Individual], BoundingBox, Option[(Int, Int)]) => Unit] = None) = {
+    visitor: Option[(World[Individual], BoundingBox, Option[(Int, Int)]) => Unit] = None): World[Individual] = {
 
     val healthCategory = generateHealthCategory(distributionConstraints)
     val interactionMap = generateInteractionMap(distributionConstraints)
@@ -98,7 +98,7 @@ object Simulation {
     home: Lens[Individual, Location],
     socialCategory: Individual => AggregatedSocialCategory,
     rng: Random,
-    visitor: Option[(World[Individual], BoundingBox, Option[(Int, Int)]) => Unit] = None) = {
+    visitor: Option[(World[Individual], BoundingBox, Option[(Int, Int)]) => Unit] = None): World[Individual] = {
 
     val moveMatrix = MoveMatrix.load(moves)
     def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => moveMatrix.get((i, j), timeSlice)
@@ -130,7 +130,7 @@ object Simulation {
     socialCategory: Individual => AggregatedSocialCategory,
     buildIndividual: (IndividualFeature, Random) => Individual,
     locatedCell: LocatedCell,
-    rng: Random) = {
+    rng: Random): World[Individual] = {
     def world = generateWorld(worldFeature.individualFeatures, buildIndividual, location, home, rng)
     moveType match {
       case MoveType.Data => assignRandomDayLocation(world, locatedCell, Individual.dayDestinationV, location.get, home.get, socialCategory, rng)
@@ -146,7 +146,7 @@ object Simulation {
     location: Individual => Location,
     home: Individual => Location,
     socialCategory: Individual => AggregatedSocialCategory,
-    rng: Random) = {
+    rng: Random): World[Individual] = {
     import eighties.h24.dynamic
 
     val newIndividuals = Array.ofDim[Individual](world.individuals.length)
@@ -180,7 +180,7 @@ object Simulation {
 
 object Fit {
 
-  def fitness(world: World[Individual], file: ScalaFile) = observable.deltaHealthByCategory(world, file)
+  def fitness(world: World[Individual], file: ScalaFile): Double = observable.deltaHealthByCategory(world, file)
 
   def run(
     maxProbaToSwitch: Double,
@@ -193,7 +193,7 @@ object Fit {
     moves: java.io.File,
     distributionConstraints: java.io.File,
     moveType: MoveType,
-    rng: Random) = {
+    rng: Random): Double = {
 
     fitness(
       Simulation.run(
@@ -264,7 +264,7 @@ object SimulationApp extends App {
           (0.010216504, 0.0, 0.806896825, 0.767755389, 0.790965130)
         )
 
-      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterSets(0)
+      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterSets(2)
 
       val world =
         Simulation.run(
@@ -281,7 +281,7 @@ object SimulationApp extends App {
           rng = rng
         )
 
-      log("population " + world.individuals.size)
+      log("population " + world.individuals.length)
       log("delta health: " + observable.deltaHealthByCategory(world, distributionConstraints.toScala))
       log("social inequality: " + observable.weightedInequalityRatioBySexAge(world))
     case _ =>
