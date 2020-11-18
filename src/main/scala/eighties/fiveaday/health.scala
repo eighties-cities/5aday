@@ -77,7 +77,7 @@ object health {
           val indexH5 = header("opinion_index_Hq5")
           val indexU1 = header("opinion_index_Uq1")
           val indexU5 = header("opinion_index_Uq5")
-          val n = cs(header("n_2002")).toDouble
+//          val n = cs(header("n_2002")).toDouble
           AggregatedSocialCategory(sex = sex(cs(header("Sex"))), age = age(cs(header("Age"))), education = education(cs(header("Edu")))) ->
             CSVLine(
               consomation2002 = cs(header("conso_5_2002")).toDouble,

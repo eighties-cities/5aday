@@ -21,7 +21,7 @@ object ComputeSocialInequalityFromSyntheticPopulation extends App {
   val parser = new CSVParser(defaultCSVFormat)
   val header = headers(distributionConstraints)
 
-  println(Calendar.getInstance.getTime + " loading population")
+  println(Calendar.getInstance.getTime.toString + " loading population")
   val population = generatedData / "population.bin"
 
   def worldFeature = WorldFeature.load(population.toJava)

@@ -339,8 +339,8 @@ object observable {
   def moran[T](matrix: Array[Array[T]], quantity: T => Double): Double = {
     def adjacentCells(i: Int, j: Int, size: Int = 1) =
       for {
-        oi ← -size to size
-        oj ← -size to size
+        oi <- -size to size
+        oj <- -size to size
         if i != oi || j != oj
         if i + oi >= 0
         if j + oj >= 0
@@ -350,8 +350,8 @@ object observable {
 
     def localNeighbourhoodPairs =
       for {
-        (cellI, (i, j)) ← zipWithIndices(matrix).flatten
-        cellJ ← adjacentCells(i, j)
+        (cellI, (i, j)) <- zipWithIndices(matrix).flatten
+        cellJ <- adjacentCells(i, j)
       } yield (cellI, cellJ, 1.0)
 
     val flatCells = matrix.toVector.flatten// ?
@@ -360,7 +360,7 @@ object observable {
 
     def numerator =
       localNeighbourhoodPairs.map {
-        case (cellI, cellJ, weight) ⇒
+        case (cellI, cellJ, weight) =>
           val term1 = if (quantity(cellI) == 0) 0.0 else quantity(cellI) - averageQuantity.toDouble
           val term2 = if (quantity(cellJ) == 0) 0.0 else quantity(cellJ) - averageQuantity.toDouble
           weight * term1 * term2
@@ -368,12 +368,12 @@ object observable {
 
     def denominator =
       flatCells.map {
-        cell ⇒
+        cell =>
           if (quantity(cell) <= 0) 0
           else math.pow(quantity(cell) - averageQuantity.toDouble, 2)
       }.sum
 
-    val totalWeight = localNeighbourhoodPairs.map { case (_, _, weight) ⇒ weight }.sum
+    val totalWeight = localNeighbourhoodPairs.map { case (_, _, weight) => weight }.sum
 
     if (denominator <= 0) 0
     else (flatCells.size.toDouble / totalWeight.toDouble) * (numerator / denominator)

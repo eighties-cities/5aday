@@ -2,7 +2,7 @@ package eighties.fiveaday.tools
 
 import better.files.File
 import eighties.h24.generation._
-import eighties.fiveaday.population.{Individual}
+import eighties.fiveaday.population.Individual
 import eighties.h24.space._
 import eighties.fiveaday.observable._
 import eighties.fiveaday.health._
@@ -20,7 +20,7 @@ object CellCSV extends App {
 
   val healthCategory = generateHealthCategory(distributionConstraints.toJava)
 
-  def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, rng)
+  def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
   def world = generateWorld(features.individualFeatures, buildIndividual, Individual.locationV, Individual.homeV, rng)
 
   val output = File("results") / "cells.csv"

@@ -102,7 +102,7 @@ object opinion {
       def newCell = {
         // Optimized version of Individual.behaviourV.get(i) == Healthy
         val healthyRatio = if(cell.nonEmpty) Some(cell.count(i => i.healthy).toDouble / cell.size) else None
-        val (interactingPeople, passivePeople) = peering(cell)
+        val (interactingPeople, _) = peering(cell)
 //
 //        interactingPeople.flatMap {
 //          case (i1, i2) => Vector(updateIndividual(i1, Some(i2), healthyRatio), updateIndividual(i2, Some(i1), healthyRatio))
@@ -131,7 +131,7 @@ object opinion {
     var index = 0
 
     for {
-      (c, i) <- Index.indexIndividuals(world, Individual.locationV.get).cells.flatten.zipWithIndex
+      (c, _) <- Index.indexIndividuals(world, Individual.locationV.get).cells.flatten.zipWithIndex
     } {
       //if (i%1000 == 0) println(Calendar.getInstance.getTime + s" conviction in cell $i")
 

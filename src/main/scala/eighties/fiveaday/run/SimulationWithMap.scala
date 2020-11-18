@@ -46,7 +46,7 @@ object SimulationWithMap {
     moveType: MoveType,
     rng: Random): World[Individual] = {
     val categories = outputPath.toScala / "health.csv"
-    categories.parent.createDirectories
+    categories.parent.createDirectories()
     categories < "index,day,slice,effective,healthy,ratio,avgOpinion,socialInequality,e\n"
     def getCategoryFile(cat: AggregatedSocialCategory) = {
       outputPath.toScala / s"${Sex.toCode(cat.sex)}_${AggregatedAge.toCode(cat.age)}_${AggregatedEducation.toCode(cat.education)}.csv"
@@ -56,7 +56,7 @@ object SimulationWithMap {
       f < "index,day,slice,sex,age,educ,effective,healthy,ratio,avgOpinion\n"
     }
 
-    def writeFileByCategory(day: Int, slice: Int, world: World[Individual], file: File, socialInequality: Double, e: Double) = {
+    def writeFileByCategory(day: Int, slice: Int, world: World[Individual], file: File, socialInequality: Double, e: Double): Unit = {
       def categoryInfo(category: Vector[Individual]) =
         if (category.isEmpty) List(0, 0, 0.0)
         else {
@@ -148,7 +148,7 @@ object SimulationWithMapApp extends App {
         .action((x, c) => c.copy(output = Some(x)))
         .text("result directory where the maps are generated"),
       opt[Int]('c', "scenario")
-        .validate(x => if(x < 1 || x > 5) Left("Scenario must be in the range 1 - 5") else Right())
+        .validate(x => if(x < 1 || x > 5) failure("Scenario must be in the range 1 - 5") else success)
         .action((x, c) => c.copy(scenario = Some(x)))
         .text("seed for the random number generator"),
       opt[Long]('s', "seed")
@@ -158,7 +158,7 @@ object SimulationWithMapApp extends App {
   }
   OParser.parse(parser, args, Config()) match {
     case Some(config) =>
-      def run(scenario: Int, parameterName: String, seed: Long) {
+      def run(scenario: Int, parameterName: String, seed: Long): Unit = {
         val rng = new Random(seed)
         val moves = config.moves.get
         val distributionConstraints = config.distribution.get
@@ -191,7 +191,7 @@ object SimulationWithMapApp extends App {
           case ObservedPop => "ObservedPop"
         }
         val output = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed"
-        output.createDirectories
+        output.createDirectories()
         val worldFeatures = pop match {
           case RandomPop => config.randomPopulation.get
           case ObservedPop => config.population.get

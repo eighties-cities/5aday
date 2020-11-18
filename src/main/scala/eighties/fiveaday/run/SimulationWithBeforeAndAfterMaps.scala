@@ -113,7 +113,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
         .action((x, c) => c.copy(output = Some(x)))
         .text("result directory where the maps are generated"),
       opt[Int]('c', "scenario")
-        .validate(x => if(x < 1 || x > 5) Left("Scenario must be in the range 1 - 5") else Right())
+        .validate(x => if(x < 1 || x > 5) failure("Scenario must be in the range 1 - 5") else success)
         .action((x, c) => c.copy(scenario = Some(x)))
         .text("scenario"),
       opt[Long]('s', "seed")
@@ -124,7 +124,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
 
   OParser.parse(parser, args, Config()) match {
     case Some(config) =>
-      def run(scenario: Int, parameterName: String, seed: Long) {
+      def run(scenario: Int, parameterName: String, seed: Long): Unit = {
         val rng = new Random(seed)
         val moves = config.moves.get
         val distributionConstraints = config.distribution.get
@@ -157,7 +157,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           case ObservedPop => "ObservedPop"
         }
         val output = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed"
-        output.createDirectories
+        output.createDirectories()
         val worldFeatures = pop match {
           case RandomPop => config.randomPopulation.get
           case ObservedPop => config.population.get

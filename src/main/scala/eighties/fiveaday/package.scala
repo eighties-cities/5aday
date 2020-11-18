@@ -25,7 +25,7 @@ package object fiveaday {
     def average: Double = s.sum / s.size
     def meanSquaredError: Double = {
       val avg = s.average
-      s.map { v ⇒ math.pow(v - avg, 2) }.average
+      s.map { v => math.pow(v - avg, 2) }.average
     }
   }
 

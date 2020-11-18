@@ -79,6 +79,7 @@ updateOptions := updateOptions.value.withGigahorse(false)
 osgiSettings
 
 OsgiKeys.exportPackage := Seq("eighties.*;-split-package:=merge-first")
+//OsgiKeys.exportPackage := Seq("eighties.fiveaday;-split-package:=merge-first","eighties.fiveaday.run;-split-package:=merge-first","eighties.fiveaday.tools;-split-package:=merge-first")
 
 OsgiKeys.importPackage := Seq("*;resolution:=optional")
 //OsgiKeys.importPackage := Seq("")
@@ -101,8 +102,9 @@ OsgiKeys.additionalHeaders :=  Map(
   "Implementation-Vendor" -> "Eighties"
 )
 
-OsgiKeys.embeddedJars := (Keys.externalDependencyClasspath in Compile).value map (_.data) filter (f=> (f.getName startsWith "gt-"))
+OsgiKeys.embeddedJars := (Keys.externalDependencyClasspath in Compile).value map (_.data) filter (f=> f.getName startsWith "gt-")
 
 // do not use coursier at the moment: it fails on jai_core for some reason
 //useCoursier := false
 
+scalacOptions ++= Seq("-deprecation", "-feature")

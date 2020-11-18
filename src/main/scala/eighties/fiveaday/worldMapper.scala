@@ -189,7 +189,7 @@ object worldMapper {
     val referencedEnvelope = new ReferencedEnvelope(originalBoundingBox.minI, originalBoundingBox.maxI+cellSize, originalBoundingBox.minJ, originalBoundingBox.maxJ+cellSize, crs)
     val factory = new GridCoverageFactory
     val coverage = factory.create("GridCoverage", bufferedImage, referencedEnvelope)
-    file.parent.createDirectories
+    file.parent.createDirectories()
     format.getWriter(file.toJava).write(coverage, null)
   }
   def mapColorRGB(world: space.World[Individual],
@@ -260,7 +260,7 @@ object worldMapper {
     val referencedEnvelope = new ReferencedEnvelope(minX * cellSize, maxX * cellSize, minY * cellSize, maxY * cellSize, crs)
     val factory = new GridCoverageFactory
     val coverage = factory.create("GridCoverage", bufferedImage, referencedEnvelope)
-    file.parent.createDirectories
+    file.parent.createDirectories()
     format.getWriter(file.toJava).write(coverage, null)
   }
   def mapColorHSV(world: space.World[Individual],
@@ -332,7 +332,7 @@ object worldMapper {
     val referencedEnvelope = new ReferencedEnvelope(minX * cellSize, maxX * cellSize, minY * cellSize, maxY * cellSize, crs)
     val factory = new GridCoverageFactory
     val coverage = factory.create("GridCoverage", bufferedImage, referencedEnvelope)
-    file.parent.createDirectories
+    file.parent.createDirectories()
     format.getWriter(file.toJava).write(coverage, null)
   }
 }

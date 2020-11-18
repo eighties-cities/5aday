@@ -21,7 +21,7 @@ object util {
   }
 
   def writeState(world: World[Individual], file: File, deltaHealth: Option[Double] = None): World[Individual] = {
-    file.parent.createDirectories
+    file.parent.createDirectories()
     file < "effective,healthy,high,highHealty,middle,middleHealthy,low,lowHealthy,socialInequality,e" + (deltaHealth match {
       case None => "\n"
       case Some(_) => ",deltaHealth\n"
