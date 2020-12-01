@@ -212,7 +212,7 @@ object SimulationWithMapApp extends App {
           rng = rng
         )
         log("population " + world.individuals.length)
-        log("delta health: " + observable.deltaHealthByCategory(world, distributionConstraints.toScala))
+        log("delta health: " + observable.deltaHealthByCategory(world, distributionConstraints))
         log("social inequality: " + observable.weightedInequalityRatioBySexAge(world))
       }
       val parameterName = "summer2020"

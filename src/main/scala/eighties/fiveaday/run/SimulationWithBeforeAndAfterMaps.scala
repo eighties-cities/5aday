@@ -55,7 +55,7 @@ object SimulationWithBeforeAndAfterMaps {
         case None =>
           initWorld = world
           def soc = observable.weightedInequalityRatioBySexAge(world)
-          log(s"delta health: ${observable.deltaHealthByCategory(world, distributionConstraints.toScala)}")
+          log(s"delta health: ${observable.deltaHealthByCategory(world, distributionConstraints)}")
           log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
           util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
       }

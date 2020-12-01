@@ -274,9 +274,9 @@ object observable {
         scala.math.pow(simHealthyRatio - proportionOfHealthyAllEdu, 2.0) * groupWeight
     }.toArray.sum
   }
-  def deltaHealthByCategory(world: World[Individual], file: File): Double = {
+  def deltaHealthByCategory(world: World[Individual], file: java.io.File): Double = {
     lazy val simulated = healthyByCategory(world)
-    def survey = behaviourBySocialCategoryInData(file, world)
+    def survey = behaviourBySocialCategoryInData(file.toScala, world)
     def numberOfIndividuals(category: AggregatedSocialCategory) = World.individualsVector[Individual].get(world).count(i => Individual.socialCategoryV.get(i) == category)
     survey.map{
       case (cat, propOfHealthy) =>

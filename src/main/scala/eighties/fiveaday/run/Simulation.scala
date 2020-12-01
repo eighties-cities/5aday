@@ -180,7 +180,7 @@ object Simulation {
 
 object Fit {
 
-  def fitness(world: World[Individual], file: ScalaFile): Double = observable.deltaHealthByCategory(world, file)
+  def fitness(world: World[Individual], file: File): Double = observable.deltaHealthByCategory(world, file)
 
   def run(
     maxProbaToSwitch: Double,
@@ -208,7 +208,8 @@ object Fit {
         distributionConstraints = distributionConstraints,
         moveType = moveType,
         rng = rng
-      ),distributionConstraints.toScala
+      ),
+      distributionConstraints
     )
   }
 }
@@ -282,7 +283,7 @@ object SimulationApp extends App {
         )
 
       log("population " + world.individuals.length)
-      log("delta health: " + observable.deltaHealthByCategory(world, distributionConstraints.toScala))
+      log("delta health: " + observable.deltaHealthByCategory(world, distributionConstraints))
       log("social inequality: " + observable.weightedInequalityRatioBySexAge(world))
     case _ =>
   }
