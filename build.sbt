@@ -5,9 +5,9 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.5"
 
-crossScalaVersions := Seq("2.12.12", "2.13.4")
+crossScalaVersions := Seq("2.12.12", "2.13.5")
 
 
 //val monocleVersion = "1.5.0-cats"

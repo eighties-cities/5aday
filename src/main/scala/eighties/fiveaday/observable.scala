@@ -189,6 +189,9 @@ object observable {
     }.toMap
   }
 
+  def opinionMedian(world: World[Individual]) =
+    median(world.individuals.map(_.opinion.toDouble))
+
   def readConso2008(file: File): Map[AggregatedSocialCategory, Double] = {
     import HealthMatrix._
 
@@ -377,6 +380,16 @@ object observable {
 
     if (denominator <= 0) 0
     else (flatCells.size.toDouble / totalWeight.toDouble) * (numerator / denominator)
+  }
+
+
+  def median (sequence: Seq[Double]) = {
+    val sortedSerie = sequence.toArray.filterNot(_.isNaN).sorted
+    val size = sortedSerie.size
+    if (size == sequence.size)
+      if (size % 2 == 0) (sortedSerie(size / 2) + sortedSerie((size / 2) - 1)) / 2
+      else sortedSerie((size / 2))
+    else Double.NaN
   }
 }
 
