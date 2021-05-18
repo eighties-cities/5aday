@@ -17,16 +17,21 @@
   */
 package eighties.fiveaday.run
 
-import java.io.File
-
 import better.files._
 import eighties.fiveaday.observable
 import eighties.fiveaday.population._
 import eighties.h24.simulation.MoveType
+import eighties.h24.space
 import eighties.h24.space._
 import eighties.h24.tools.Log.log
+import org.geotools.data.{DataUtilities, DefaultTransaction}
+import org.geotools.geometry.jts.{Geometries, ReferencedEnvelope}
+import org.geotools.geopkg.{FeatureEntry, GeoPackage}
+import org.geotools.referencing.CRS
+import org.locationtech.jts.geom.{GeometryFactory, Coordinate => JCoordinate}
 import scopt.OParser
 
+import java.io.File
 import scala.util.Random
 object SimulationWithBeforeAndAfterMaps {
   def run(
@@ -41,23 +46,111 @@ object SimulationWithBeforeAndAfterMaps {
            distributionConstraints: java.io.File,
            outputPath: java.io.File,
            moveType: MoveType,
-           rng: Random): World[Individual] = {
+           rng: Random,
+           export: Boolean): World[Individual] = {
     var initWorld: World[Individual] = null
+    var geopkg: GeoPackage = null
+    val geometryFactory = new GeometryFactory
     def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]): Unit = {
+      def createEntry(featureTypeName: String, world1: World[Individual], world2: Option[World[Individual]]) = {
+        def aggregator: Array[Double] => Double = v => v.sum / v.length
+        def getValue(individual: Individual) = if (individual.healthy) 1.0 else 0.0
+        def mapIndex(index: Index[Individual]) = index.cells.map(_.map(individuals => if (individuals.nonEmpty) Some(aggregator(individuals.map(getValue))) else None))
+        val entry = new FeatureEntry
+        val specs = "geom:Polygon:srid=3035, propHealthy:Double"
+        val featureType = DataUtilities.createType(featureTypeName, specs)
+        entry.setGeometryColumn (featureType.getGeometryDescriptor.getLocalName)
+        val geometryType = featureType.getGeometryDescriptor.getType
+        val gType = Geometries.getForName (geometryType.getName.getLocalPart)
+        entry.setGeometryType (gType)
+        val gridSize = 1000 // FIXME : we have to modify h24 to include te gridsize in the visitor (and simulateOneDay)
+        val referencedEnvelope = new ReferencedEnvelope(obb.minI, obb.maxI+gridSize, obb.minJ, obb.maxJ+gridSize, CRS.decode("EPSG:3035"))
+        log(s"bbox ${obb.minI} - ${obb.minJ} - $gridSize")
+        entry.setBounds(referencedEnvelope)
+        log("create featureentry " + featureType.getTypeName)
+        geopkg.create(entry, featureType)
+        val transaction = new DefaultTransaction()
+        log("create writer")
+        val writer = geopkg.writer(entry,true, null, transaction)
+        log("Let's go")
+        val index1 = space.Index.indexIndividuals(world1, Individual.homeV.get)
+        val mappedValues = if (world2.isDefined) {
+          val index2 = space.Index.indexIndividuals(world2.get, Individual.homeV.get)
+          val mappedValues1 = mapIndex(index1)
+          val mappedValues2 = mapIndex(index2)
+          mappedValues1.zipWithIndex.map {
+            case (array1, ind1) => array1.zipWithIndex.map {
+              case (array2, ind2) => (array2, mappedValues2(ind1)(ind2)) match {
+                case (Some(v1), Some(v2)) => Some(v2 - v1)
+                case _ => None
+              }
+            }
+          }
+        } else {
+          mapIndex(index1)
+        }
+        for {
+          (l, i) <- mappedValues.zipWithIndex
+          (valueOption, j) <- l.zipWithIndex
+          if valueOption.isDefined
+        } {
+          val ii = obb.minI + i * gridSize
+          val jj = obb.minJ + j * gridSize
+          val value = valueOption.get
+          val (p0, p1, p2, p3)  = (new JCoordinate(ii, jj), new JCoordinate(ii+gridSize, jj), new JCoordinate(ii+gridSize, jj+gridSize), new JCoordinate(ii, jj+gridSize))
+          def polygon = geometryFactory.createPolygon(Array(p0,p1,p2,p3,p0))
+          val values = Array[AnyRef](
+            polygon,
+            value.asInstanceOf[AnyRef]
+          )
+          def simpleFeature = writer.next
+          simpleFeature.setAttributes(values)
+          writer.write()
+        }
+        log("close writer")
+        writer.close()
+        log("commit transaction")
+        transaction.commit()
+        log("close transaction")
+        transaction.close()
+      }
       option match {
         case Some((day, slice)) =>
           if (day == days-1 && slice == 2) {
-            def soc = observable.weightedInequalityRatioBySexAge(world)
-            def initSoc = observable.weightedInequalityRatioBySexAge(initWorld)
-            util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "1_end.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
-            util.mapHealthDiff(initWorld, world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "2_diff.tiff", (soc - initSoc).toString, "", fraction = 8)
+            // the last simulation
+            if (export) {
+              createEntry("Final", world, None)
+              createEntry("Diff", initWorld, Some(world))
+              log("close geopackage")
+              geopkg.close()
+            } else {
+              def soc = observable.weightedInequalityRatioBySexAge(world)
+              def initSoc = observable.weightedInequalityRatioBySexAge(initWorld)
+              util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "1_end.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
+              util.mapHealthDiff(initWorld, world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "2_diff.tiff", (soc - initSoc).toString, "", fraction = 8)
+            }
           }
         case None =>
+          // the first simulation
           initWorld = world
-          def soc = observable.weightedInequalityRatioBySexAge(world)
-          log(s"delta health: ${observable.deltaHealthByCategory(world, distributionConstraints)}")
-          log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
-          util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
+          if (export) {
+            // initialize the geopackage
+            val outputFile = new File(outputPath, "result.gpkg")
+            val params = new java.util.HashMap[String, Object]()
+            params.put("dbtype", "geopkg")
+            params.put("database", outputFile.getPath)
+            log("create geopackage")
+            geopkg = new GeoPackage(outputFile)
+            log("init geopackage")
+            geopkg.init()
+            // create the first entry
+            createEntry("Initial", world, None)
+          } else {
+            def soc = observable.weightedInequalityRatioBySexAge(world)
+            log(s"delta health: ${observable.deltaHealthByCategory(world, distributionConstraints)}")
+            log(s"social inequality: ${observable.weightedInequalityRatioBySexAge(world)}")
+            util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "0_start.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
+          }
       }
     }
     Simulation.run(
@@ -85,7 +178,8 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
     distribution: Option[File] = None,
     output: Option[File] = None,
     seed: Option[Long] = None,
-    scenario: Option[Int] = None)
+    scenario: Option[Int] = None,
+    export: Boolean = true)
 
   val builder = OParser.builder[Config]
   val parser = {
@@ -118,7 +212,10 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
         .text("scenario"),
       opt[Long]('s', "seed")
         .action((x, c) => c.copy(seed = Some(x)))
-        .text("seed for the random number generator")
+        .text("seed for the random number generator"),
+      opt[Boolean]('e', "export")
+        .action((x, c) => c.copy(export = x))
+        .text("export the results rather than produce the maps")
     )
   }
 
@@ -137,7 +234,8 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           ("ose", (1.0, 0.12454546, 0.66766742, 0.26597869, 0.24032422)),
           ("duo_0703", (0.996, 0.405, 0.787, 0.161, 0.102)),
           ("summer2020", (0.010216504, 0.0, 0.806896825, 0.767755389, 0.790965130)),
-          ("hope2020", (0.02571037, 0.00878027, 0.55859533, 0.72271431, 0.6156984))
+          ("hope2020", (0.02571037, 0.00878027, 0.55859533, 0.72271431, 0.6156984)),
+          ("valentine2021",(1.0, 0.209712299284924, 0.80338439724895, 0.190788311771708, 0.0166381262141282))
         )
         val scenarioMap = Map(
           (1, (RandomPop, MoveType.No)),
@@ -175,10 +273,11 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           distributionConstraints = distributionConstraints,
           output.toJava,
           moveType,
-          rng = rng
+          rng = rng,
+          config.export
         )
       }
-      val parameterName = "hope2020"
+      val parameterName = "valentine2021"
       val seed = config.seed.getOrElse(42L)
       if (config.scenario.isDefined) run(config.scenario.get, parameterName, seed)
       else {

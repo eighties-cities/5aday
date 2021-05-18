@@ -228,9 +228,9 @@ object observable {
 
         val categorySize = values.map { case(cat, _) => numberOfIndividuals(cat) }
         val numberOfHealthyAllEdu = (values.values zip categorySize).map { case (conso, n) => conso * n }
-        val numberOfIndivdualsAllEdu = categorySize.sum
+        val numberOfIndividualsAllEdu = categorySize.sum
 
-        val proportionOfHealthyAllEdu = numberOfHealthyAllEdu.sum / numberOfIndivdualsAllEdu
+        val proportionOfHealthyAllEdu = numberOfHealthyAllEdu.sum / numberOfIndividualsAllEdu
 
         (sex, age) -> proportionOfHealthyAllEdu
       }
