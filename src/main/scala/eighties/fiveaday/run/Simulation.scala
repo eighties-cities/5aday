@@ -49,7 +49,7 @@ object Simulation {
     distributionConstraints: java.io.File,
     moveType: MoveType,
     rng: Random,
-    visitor: Option[(World[Individual], BoundingBox, Option[(Int, Int)]) => Unit] = None): World[Individual] = {
+    visitor: Option[(World[Individual], BoundingBox, Int, Option[(Int, Int)]) => Unit] = None): World[Individual] = {
 
     val healthCategory = generateHealthCategory(distributionConstraints)
     val interactionMap = generateInteractionMap(distributionConstraints)
@@ -98,7 +98,7 @@ object Simulation {
     home: Lens[Individual, Location],
     socialCategory: Individual => AggregatedSocialCategory,
     rng: Random,
-    visitor: Option[(World[Individual], BoundingBox, Option[(Int, Int)]) => Unit] = None): World[Individual] = {
+    visitor: Option[(World[Individual], BoundingBox, Int, Option[(Int, Int)]) => Unit] = None): World[Individual] = {
 
     val moveMatrix = MoveMatrix.load(moves)
     def locatedCell: LocatedCell = (timeSlice: TimeSlice, i: Int, j: Int) => moveMatrix.get((i, j), timeSlice)
@@ -108,6 +108,7 @@ object Simulation {
         days = days,
         world = () => initialiseWorld(worldFeature, moveType, location, home, socialCategory, buildIndividual, locatedCell, rng),
         bbox = worldFeature.originalBoundingBox,
+        gridSize = worldFeature.gridSize,
         locatedCell = locatedCell,
         moveType = moveType,
         exchange = exchange,

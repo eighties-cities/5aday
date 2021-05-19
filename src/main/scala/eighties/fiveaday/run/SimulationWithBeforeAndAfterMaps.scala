@@ -51,7 +51,7 @@ object SimulationWithBeforeAndAfterMaps {
     var initWorld: World[Individual] = null
     var geopkg: GeoPackage = null
     val geometryFactory = new GeometryFactory
-    def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]): Unit = {
+    def visit(world: World[Individual], obb: BoundingBox, gridSize: Int, option: Option[(Int, Int)]): Unit = {
       def createEntry(featureTypeName: String, world1: World[Individual], world2: Option[World[Individual]]) = {
         def aggregator: Array[Double] => Double = v => v.sum / v.length
         def getValue(individual: Individual) = if (individual.healthy) 1.0 else 0.0
@@ -63,16 +63,15 @@ object SimulationWithBeforeAndAfterMaps {
         val geometryType = featureType.getGeometryDescriptor.getType
         val gType = Geometries.getForName (geometryType.getName.getLocalPart)
         entry.setGeometryType (gType)
-        val gridSize = 1000 // FIXME : we have to modify h24 to include te gridsize in the visitor (and simulateOneDay)
         val referencedEnvelope = new ReferencedEnvelope(obb.minI, obb.maxI+gridSize, obb.minJ, obb.maxJ+gridSize, CRS.decode("EPSG:3035"))
-        log(s"bbox ${obb.minI} - ${obb.minJ} - $gridSize")
+        log(s"bbox ${obb.minI} - ${obb.minJ} ($gridSize)")
         entry.setBounds(referencedEnvelope)
         log("create featureentry " + featureType.getTypeName)
         geopkg.create(entry, featureType)
         val transaction = new DefaultTransaction()
         log("create writer")
         val writer = geopkg.writer(entry,true, null, transaction)
-        log("Let's go")
+        log(s"Let's go (${world1.sideI} - ${world1.sideJ})")
         val index1 = space.Index.indexIndividuals(world1, Individual.homeV.get)
         val mappedValues = if (world2.isDefined) {
           val index2 = space.Index.indexIndividuals(world2.get, Individual.homeV.get)
@@ -254,6 +253,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           case RandomPop => "RandomPop"
           case ObservedPop => "ObservedPop"
         }
+        println(s"popName = $popName")
         val output = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed"
         output.createDirectories()
         val worldFeatures = pop match {

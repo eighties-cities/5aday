@@ -79,7 +79,7 @@ object SimulationWithMap {
     val parameters = outputPath.toScala / "parameters.csv"
     parameters < "maxProbaToSwitch,constraintsStrength,inertiaCoefficient,healthyDietReward,interpersonalInfluence\n"
     parameters << s"$maxProbaToSwitch,$constraintsStrength,$inertiaCoefficient,$healthyDietReward,$interpersonalInfluence"
-    def visit(world: World[Individual], obb: BoundingBox, option: Option[(Int, Int)]): Unit = {
+    def visit(world: World[Individual], obb: BoundingBox, gridSize: Int, option: Option[(Int, Int)]): Unit = {
       option match {
         case Some((day, slice)) =>
           val soc = observable.weightedInequalityRatioBySexAge(world)
