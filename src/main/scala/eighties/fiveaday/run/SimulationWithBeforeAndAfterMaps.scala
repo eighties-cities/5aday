@@ -52,7 +52,7 @@ object SimulationWithBeforeAndAfterMaps {
     var geopkg: GeoPackage = null
     val geometryFactory = new GeometryFactory
     def visit(world: World[Individual], obb: BoundingBox, gridSize: Int, option: Option[(Int, Int)]): Unit = {
-      def createEntry(featureTypeName: String, world1: World[Individual], world2: Option[World[Individual]]) = {
+      def createEntry(featureTypeName: String, world1: World[Individual], world2: Option[World[Individual]]): Unit = {
         def aggregator: Array[Double] => Double = v => v.sum / v.length
         def getValue(individual: Individual) = if (individual.healthy) 1.0 else 0.0
         def mapIndex(index: Index[Individual]) = index.cells.map(_.map(individuals => if (individuals.nonEmpty) Some(aggregator(individuals.map(getValue))) else None))
@@ -134,12 +134,11 @@ object SimulationWithBeforeAndAfterMaps {
           initWorld = world
           if (export) {
             // initialize the geopackage
-            val outputFile = new File(outputPath, "result.gpkg")
             val params = new java.util.HashMap[String, Object]()
             params.put("dbtype", "geopkg")
-            params.put("database", outputFile.getPath)
+            params.put("database", outputPath.getPath)
             log("create geopackage")
-            geopkg = new GeoPackage(outputFile)
+            geopkg = new GeoPackage(outputPath)
             log("init geopackage")
             geopkg.init()
             // create the first entry
@@ -254,8 +253,15 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           case ObservedPop => "ObservedPop"
         }
         println(s"popName = $popName")
-        val output = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed"
-        output.createDirectories()
+        val output = if (config.export) {
+          val outputFile = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed.gpkg"
+          outputFile.parent.createDirectories()
+          outputFile
+        } else {
+          val outputDirectory = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed"
+          outputDirectory.createDirectories()
+          outputDirectory
+        }
         val worldFeatures = pop match {
           case RandomPop => config.randomPopulation.get
           case ObservedPop => config.population.get
