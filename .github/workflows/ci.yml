@@ -13,7 +13,12 @@ jobs:
       with:
         java-version: openjdk@1.11
     - name: publish h24
-      run: cd h24 && sbt publishLocal
+      run: |
+           cd h24
+           sbt publishLocal
+           unzip InputODData/H24_location_noID_ParisRegion.zip -d prepared_data_IDF/
+           lzma -f prepared_data_IDF/H24_location_noID_ParisRegion.csv
+           sbt -J-Xmx4G "runMain eighties.h24.tools.MoveMatrixGenerator -e prepared_data_IDF/H24_location_noID_ParisRegion.csv.lzma -s EPSG:27572 -p results_IDF/population.bin -m results_IDF/moves.bin"
     - name: checkout 5aday
       uses: actions/checkout@v2
       with:
@@ -21,5 +26,8 @@ jobs:
     - uses: olafurpg/setup-scala@v10
       with:
         java-version: openjdk@1.11
-    - name: compile 5aday
-      run: cd 5ad && sbt osgiBundle
+    - name: compile & run 1 simulation of 5aday
+      run: |
+           cd 5ad
+           sbt osgiBundle
+           sbt -J-Xmx2G "runMain eighties.fiveaday.run.SimulationApp -d ./data/initialisation_distribution_per_cat_2002_2008.csv -p ../h24/results_IDF/population.bin -m ../h24/results_IDF/moves.bin"
