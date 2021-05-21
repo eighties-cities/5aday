@@ -13,13 +13,13 @@ jobs:
       with:
         java-version: openjdk@1.11
     - name: publish h24
-      run: sbt publishLocal
+      run: cd h24 && sbt publishLocal
     - name: checkout 5aday
       uses: actions/checkout@v2
       with:
-        path: main
+        path: 5ad
     - uses: olafurpg/setup-scala@v10
       with:
         java-version: openjdk@1.11
     - name: compile 5aday
-      run: sbt osgiBundle
+      run: cd 5ad && sbt osgiBundle
