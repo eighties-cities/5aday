@@ -14,7 +14,7 @@ jobs:
         java-version: openjdk@1.11
     - name: install Packages
       run: |
-            sudo apt-get install python-gdal
+            sudo apt-get install gdal-bin
     - name: publish h24
       run: |
            cd h24
