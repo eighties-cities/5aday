@@ -28,6 +28,7 @@ import eighties.h24.tools.Log.log
 import scopt.OParser
 
 import java.io.File
+import scala.collection.mutable
 import scala.util.Random
 
 object Statistics extends App {
@@ -83,6 +84,7 @@ object Statistics extends App {
       val moves = config.moves.get
       val distributionConstraints = config.distribution.get
       val outputFile = config.output.get
+      val replications = config.replications
 
       val parameterMap = Map(
         ("environment", (0.08433503404492204, 0.14985650295919095, 0.7333227248982435, 0.03291749337039018, 0.23398559843386524)),
@@ -101,47 +103,32 @@ object Statistics extends App {
 
       val days = 6
       var categoryStats = Map[AggregatedSocialCategory, Int]()
-      val dayStats = Array.fill(days){Map[AggregatedSocialCategory, Double]()}
-      val eveningStats = Array.fill(days){Map[AggregatedSocialCategory, Double]()}
+      val dayStats = mutable.Map[AggregatedSocialCategory, Double]()
+      val eveningStats = mutable.Map[AggregatedSocialCategory, Double]()
       def visit(world: World[Individual], obb: BoundingBox, gridSize: Int, option: Option[(Int, Int)]): Unit = {
-        def percentageOfIndividualsNotAtHome(world: World[Individual]) = AggregatedSocialCategory.all.map{cat=>
-          val agents = sexAgeEducation(cat.sex, cat.age, cat.education)(world)
-          cat -> agents.individuals.count(ind=>ind.location != ind.home).toDouble / agents.individuals.length
-        }.toMap
+        def percentageOfIndividualsNotAtHome(world: World[Individual], map: mutable.Map[AggregatedSocialCategory, Double]) =
+          AggregatedSocialCategory.all.foreach { cat =>
+            val agents = sexAgeEducation(cat.sex, cat.age, cat.education)(world)
+            val v = map.getOrElse(cat, 0.0) + (agents.individuals.count(ind => ind.location != ind.home).toDouble/agents.individuals.length)
+            map.put(cat, v)
+          }
         option match {
           case Some((day, slice)) =>
             if (slice == 1) {
               // the day time slice
-              dayStats(day) ++= percentageOfIndividualsNotAtHome(world)
+              percentageOfIndividualsNotAtHome(world, dayStats)
             }
             if (slice == 2) {
               // the evening time slice
-              eveningStats(day) ++= percentageOfIndividualsNotAtHome(world)
-            }
-            if (day == days-1 && slice == 2) {
-              // the last simulation: we write this down now
-              outputFile.getParentFile.mkdirs()
-              val file = ScalaFile(outputFile.getPath)
-              // headers
-              file < (Seq("sex","age","education","nb agents") ++
-                (0 until days).map(day=> s"day $day % different day cell") ++
-                Seq("avg % different day cell") ++
-                (0 until days).map(day=> s"day $day % different evening cell") ++
-                Seq("avg % different evening cell\n")).mkString(",")
-              AggregatedSocialCategory.all.map { cat =>
-                file <<  (Seq(s"${cat.sex}", s"${cat.age}", s"${cat.education}", s"${categoryStats(cat)}") ++
-                  (0 until days).map(day=> s"${dayStats(day)(cat)}") ++
-                  Seq(s"${dayStats.map(_(cat)).sum / days}") ++
-                  (0 until days).map(day=> s"${eveningStats(day)(cat)}") ++
-                  Seq(s"${eveningStats.map(_(cat)).sum / days}")).mkString(",")
-              }
+              percentageOfIndividualsNotAtHome(world, eveningStats)
             }
           case None => // the first simulation... nothing to do
-            categoryStats = AggregatedSocialCategory.all.map{cat=>cat -> sexAgeEducation(cat.sex, cat.age, cat.education)(world).individuals.length}.toMap
+            if (categoryStats.isEmpty)
+              categoryStats = AggregatedSocialCategory.all.map{cat=>cat -> sexAgeEducation(cat.sex, cat.age, cat.education)(world).individuals.length}.toMap
         }
       }
 
-      val world =
+      for {iteration <- 0 until replications}
         Simulation.run(
           maxProbaToSwitch = maxProbaToSwitch,
           constraintsStrength = constraintsStrength,
@@ -156,8 +143,20 @@ object Statistics extends App {
           rng = rng,
           Some(visit)
         )
+      // the last simulation: we write this down now
+      outputFile.getParentFile.mkdirs()
+      val file = ScalaFile(outputFile.getPath)
+      // headers
+      file < (Seq("sex","age","education","nb agents") ++
+        Seq("avg % different day cell") ++
+        Seq("avg % different evening cell\n")).mkString(",")
+      AggregatedSocialCategory.all.map { cat =>
+        file << (Seq(s"${cat.sex}", s"${cat.age}", s"${cat.education}", s"${categoryStats(cat)}") ++
+          Seq(s"${dayStats(cat) / (replications * days)}") ++
+          Seq(s"${eveningStats(cat) / (replications * days)}")).mkString(",")
+      }
 
-      log("population " + world.individuals.length)
+      log("all done!")
     case _ =>
   }
 
