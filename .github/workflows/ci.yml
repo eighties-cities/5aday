@@ -9,17 +9,17 @@ jobs:
       with:
         repository: eighties-cities/h24
         path: h24
-    - name: compile and publish h24
-      uses: olafurpg/setup-scala@v10
+    - uses: olafurpg/setup-scala@v10
       with:
         java-version: openjdk@1.11
+    - name: publish h24
       run: sbt publishLocal
     - name: checkout 5aday
       uses: actions/checkout@v2
       with:
         path: main
-    - name: compile 5aday
-      uses: olafurpg/setup-scala@v10
+    - uses: olafurpg/setup-scala@v10
       with:
         java-version: openjdk@1.11
+    - name: compile 5aday
       run: sbt osgiBundle
