@@ -99,18 +99,21 @@ object Statistics extends App {
         ("duo_0703", (0.996, 0.405, 0.787, 0.161, 0.102)),
         ("summer2020", (0.010216504, 0.0, 0.806896825, 0.767755389, 0.790965130)),
         ("hope2020", (0.02571037, 0.00878027, 0.55859533, 0.72271431, 0.6156984)),
-        ("valentine2021",(1.0, 0.209712299284924, 0.80338439724895, 0.190788311771708, 0.0166381262141282))
+        ("valentine2021",(1.0, 0.209712299284924, 0.80338439724895, 0.190788311771708, 0.0166381262141282)),
+        ("rightMay",(0.55351044, 1.0, 0.68560676, 0.37244175, 0.0)),
+        ("leftMay",(0.52513839, 0.189485955, 0.877346626, 0.754637737, 0.007118287))
       )
 
-      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap("valentine2021")
+      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap("leftMay")
 
       val days = 6
 
       var categoryStats = Map[AggregatedSocialCategory, Int]()
       val dayStats = mutable.Map[AggregatedSocialCategory, Double]()
       val eveningStats = mutable.Map[AggregatedSocialCategory, Double]()
-      val globalHealthStats = Array.fill(days, timeSlices.length, 6)(ArrayBuffer[Double]())
-      val categoryHealthStats = Array.fill(days, timeSlices.length, 4)(mutable.Map[AggregatedSocialCategory, ArrayBuffer[Double]]())
+      val initHealthStats = Array.fill(10)(0.0)
+      val globalHealthStats = Array.fill(days, timeSlices.length, 6)(0.0)
+      val categoryHealthStats = Array.fill(days, timeSlices.length, 4)(mutable.Map[AggregatedSocialCategory, Double]())
       def visit(world: World[Individual], obb: BoundingBox, gridSize: Int, option: Option[(Int, Int)]): Unit = {
         def percentageOfIndividualsNotAtHome(world: World[Individual], map: mutable.Map[AggregatedSocialCategory, Double]) =
           AggregatedSocialCategory.all.foreach { cat =>
@@ -133,9 +136,7 @@ object Statistics extends App {
               util.vectorStats(individualOfCategory).zipWithIndex.foreach{
                 case (value, ind) =>
                   val map = categoryHealthStats(day)(slice)(ind)
-                  val v = map.getOrElse(cat, ArrayBuffer())
-                  v+=value
-                  map.put(cat,v)
+                  map.put(cat, map.getOrElse(cat, 0.0) + value)
               }
 //              getCategoryFile(outputPath, cat) << s"""$index,$day,$slice,${Sex.toCode(cat.sex)},${AggregatedAge.toCode(cat.age)},${AggregatedEducation.toCode(cat.education)},${util.vectorStats(individualOfCategory).mkString(",")}"""
             }
@@ -146,7 +147,20 @@ object Statistics extends App {
           case None => // the first simulation... nothing to do
             if (categoryStats.isEmpty)
               categoryStats = AggregatedSocialCategory.all.map{cat=>cat -> sexAgeEducation(cat.sex, cat.age, cat.education)(world).individuals.length}.toMap
-            util.writeState(world, outputPath.toScala / "init.csv")
+//            util.writeState(world, outputPath.toScala / "init.csv")
+            val size = World.individualsVector[Individual].get(world).size
+            def nbHealthy = World.individualsVector[Individual].get(world).count(_.healthy)
+            val cat = observable.getCategories(world)
+            initHealthStats(0)+=size
+            initHealthStats(1)+=nbHealthy
+            initHealthStats(2)+=cat.numberOfHigh
+            initHealthStats(3)+=cat.numberOfHighHealthy
+            initHealthStats(4)+=cat.numberOfMiddle
+            initHealthStats(5)+=cat.numberOfMiddleHealthy
+            initHealthStats(6)+=cat.numberOfLow
+            initHealthStats(7)+=cat.numberOfLowHealthy
+            initHealthStats(8)+=observable.weightedInequalityRatioBySexAge(world)
+            initHealthStats(9)+=observable.erreygersE_(cat, size)
         }
       }
 
@@ -176,6 +190,10 @@ object Statistics extends App {
           Seq(s"${dayStats(cat) / (replications * days)}") ++
           Seq(s"${eveningStats(cat) / (replications * days)}")).mkString(",")
       }
+      // init file
+      val initHealthFile = outputPath.toScala / "init.csv"
+      initHealthFile < "effective,healthy,high,highHealty,middle,middleHealthy,low,lowHealthy,socialInequality,e\n"
+      file << initHealthStats.map(_/replications).mkString(",")
       // health file
       val globalHealthFile = outputPath.toScala / "health.csv"
       globalHealthFile < "index,day,slice,effective,healthy,ratio,avgOpinion,socialInequality,e\n"
@@ -194,19 +212,19 @@ object Statistics extends App {
         //${categoryStats.values.sum} and globalHealthStats(day)(slice)(0) should be the same
         globalHealthFile <<
           s"""$index,$day,$slice,${categoryStats.values.sum},
-             |${globalHealthStats(day)(slice)(1).sum/replications},
-             |${globalHealthStats(day)(slice)(2).sum/replications},
-             |${globalHealthStats(day)(slice)(3).sum/replications},
-             |${globalHealthStats(day)(slice)(4).sum/replications},
-             |${globalHealthStats(day)(slice)(5).sum/replications}""".stripMargin.replaceAll("\n", "")
+             |${globalHealthStats(day)(slice)(1)/replications},
+             |${globalHealthStats(day)(slice)(2)/replications},
+             |${globalHealthStats(day)(slice)(3)/replications},
+             |${globalHealthStats(day)(slice)(4)/replications},
+             |${globalHealthStats(day)(slice)(5)/replications}""".stripMargin.replaceAll("\n", "")
         AggregatedSocialCategory.all.foreach { cat =>
           def f = getCategoryFile(cat)
           f <<
             s"""$index,$day,$slice,${Sex.toCode(cat.sex)},${AggregatedAge.toCode(cat.age)},${AggregatedEducation.toCode(cat.education)},
                |${categoryStats(cat)},
-               |${categoryHealthStats(day)(slice)(1)(cat).sum/replications},
-               |${categoryHealthStats(day)(slice)(2)(cat).sum/replications},
-               |${categoryHealthStats(day)(slice)(3)(cat).sum/replications}""".stripMargin.replaceAll("\n", "")
+               |${categoryHealthStats(day)(slice)(1)(cat)/replications},
+               |${categoryHealthStats(day)(slice)(2)(cat)/replications},
+               |${categoryHealthStats(day)(slice)(3)(cat)/replications}""".stripMargin.replaceAll("\n", "")
         }
       }
 
