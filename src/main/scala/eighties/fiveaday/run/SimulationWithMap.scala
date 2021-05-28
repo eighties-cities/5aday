@@ -17,8 +17,9 @@
   */
 package eighties.fiveaday.run
 
-import java.io.File
+import better.files
 
+import java.io.File
 import better.files.Dsl.SymbolicOperations
 import better.files._
 import eighties.fiveaday.observable
@@ -32,7 +33,7 @@ import scopt.OParser
 import scala.util.Random
 
 object SimulationWithMap {
-  def getCategoryFile(outputPath: java.io.File, cat: AggregatedSocialCategory) = {
+  def getCategoryFile(outputPath: java.io.File, cat: AggregatedSocialCategory): files.File = {
     outputPath.toScala / s"${Sex.toCode(cat.sex)}_${AggregatedAge.toCode(cat.age)}_${AggregatedEducation.toCode(cat.education)}.csv"
   }
   def writeFileByCategory(outputPath: java.io.File, day: Int, slice: Int, world: World[Individual], file: File, socialInequality: Double, e: Double): Unit = {

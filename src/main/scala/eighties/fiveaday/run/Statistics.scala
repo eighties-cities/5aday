@@ -18,7 +18,7 @@
 package eighties.fiveaday.run
 
 import better.files.Dsl.SymbolicOperations
-import better.files.{FileExtensions, File => ScalaFile}
+import better.files.FileExtensions
 import eighties.fiveaday.observable
 import eighties.fiveaday.observable.sexAgeEducation
 import eighties.fiveaday.population.Individual
@@ -31,7 +31,6 @@ import scopt.OParser
 
 import java.io.File
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 object Statistics extends App {
@@ -104,7 +103,7 @@ object Statistics extends App {
         ("leftMay",(0.52513839, 0.189485955, 0.877346626, 0.754637737, 0.007118287))
       )
 
-      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap("leftMay")
+      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap("valentine2021")
 
       val days = 6
 
@@ -115,7 +114,7 @@ object Statistics extends App {
       val globalHealthStats = Array.fill(days, timeSlices.length, 6)(0.0)
       val categoryHealthStats = Array.fill(days, timeSlices.length, 4)(mutable.Map[AggregatedSocialCategory, Double]())
       def visit(world: World[Individual], obb: BoundingBox, gridSize: Int, option: Option[(Int, Int)]): Unit = {
-        def percentageOfIndividualsNotAtHome(world: World[Individual], map: mutable.Map[AggregatedSocialCategory, Double]) =
+        def percentageOfIndividualsNotAtHome(world: World[Individual], map: mutable.Map[AggregatedSocialCategory, Double]): Unit =
           AggregatedSocialCategory.all.foreach { cat =>
             val agents = sexAgeEducation(cat.sex, cat.age, cat.education)(world)
             val v = map.getOrElse(cat, 0.0) + (agents.individuals.count(ind => ind.location != ind.home).toDouble/agents.individuals.length)
@@ -140,7 +139,7 @@ object Statistics extends App {
               }
 //              getCategoryFile(outputPath, cat) << s"""$index,$day,$slice,${Sex.toCode(cat.sex)},${AggregatedAge.toCode(cat.age)},${AggregatedEducation.toCode(cat.education)},${util.vectorStats(individualOfCategory).mkString(",")}"""
             }
-            util.vectorStats(world.individuals).zipWithIndex.foreach{ case (value, ind) => globalHealthStats(day)(slice)(ind)+=value }
+            util.vectorStats(World.individualsVector[Individual].get(world)).zipWithIndex.foreach{ case (value, ind) => globalHealthStats(day)(slice)(ind)+=value }
             globalHealthStats(day)(slice)(4)+=observable.weightedInequalityRatioBySexAge(world)
             globalHealthStats(day)(slice)(5)+=observable.erreygersE(world)
 //            SimulationWithMap.writeFileByCategory(outputPath, day, slice, world, categories.toJava, soc, e)
@@ -193,7 +192,7 @@ object Statistics extends App {
       // init file
       val initHealthFile = outputPath.toScala / "init.csv"
       initHealthFile < "effective,healthy,high,highHealty,middle,middleHealthy,low,lowHealthy,socialInequality,e\n"
-      file << initHealthStats.map(_/replications).mkString(",")
+      initHealthFile << initHealthStats.map(_/replications).mkString(",")
       // health file
       val globalHealthFile = outputPath.toScala / "health.csv"
       globalHealthFile < "index,day,slice,effective,healthy,ratio,avgOpinion,socialInequality,e\n"
@@ -205,8 +204,8 @@ object Statistics extends App {
         f < "index,day,slice,sex,age,educ,effective,healthy,ratio,avgOpinion\n"
       }
       for {
-        day <- (0 until days)
-        slice <- (0 until timeSlices.length)
+        day <- 0 until days
+        slice <- timeSlices.indices
       } {
         val index = day * 3 + slice
         //${categoryStats.values.sum} and globalHealthStats(day)(slice)(0) should be the same
