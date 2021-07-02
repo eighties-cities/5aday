@@ -169,7 +169,6 @@ object Statistics extends App {
           constraintsStrength = constraintsStrength,
           inertiaCoefficient = inertiaCoefficient,
           healthyDietReward = healthyDietReward,
-          interpersonalInfluence = interpersonalInfluence,
           days = days,
           population = worldFeatures,
           moves = moves,
