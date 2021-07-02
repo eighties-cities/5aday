@@ -1,10 +1,12 @@
 package eighties.fiveaday.run
 
+import better.files.Dsl.SymbolicOperations
 import better.files.File
 import eighties.fiveaday.population.Individual
-import eighties.h24.space.{BoundingBox, World}
 import eighties.fiveaday.{observable, worldMapper}
-import better.files.Dsl.SymbolicOperations
+import eighties.h24.space.{BoundingBox, World}
+
+import scala.collection.immutable.Seq
 
 object util {
   def mapHealth(world: World[Individual], obb: BoundingBox, width: Int, height: Int, file: File, textLeft: String, textRight: String, atHome: Boolean = true, maxValue: Double = 1.0, fraction: Int = 4, rescale: Boolean = true): Unit = {
@@ -38,4 +40,12 @@ object util {
     world
   }
 
+  def vectorStats(category: Seq[Individual]): Seq[Double] =
+    if (category.isEmpty) List(0, 0, 0.0, 0.0)
+    else {
+      val categorySize = category.size
+      val nbHealthy = category.count(_.healthy)
+      val avgOpinion = category.map(_.opinion.toDouble).sum / categorySize
+      Seq(categorySize, nbHealthy, nbHealthy.toDouble / categorySize, avgOpinion)
+    }
 }

@@ -17,8 +17,9 @@
   */
 package eighties.fiveaday.run
 
-import java.io.File
+import better.files
 
+import java.io.File
 import better.files.Dsl.SymbolicOperations
 import better.files._
 import eighties.fiveaday.observable
@@ -32,6 +33,21 @@ import scopt.OParser
 import scala.util.Random
 
 object SimulationWithMap {
+  def getCategoryFile(outputPath: java.io.File, cat: AggregatedSocialCategory): files.File = {
+    outputPath.toScala / s"${Sex.toCode(cat.sex)}_${AggregatedAge.toCode(cat.age)}_${AggregatedEducation.toCode(cat.education)}.csv"
+  }
+  def writeFileByCategory(outputPath: java.io.File, day: Int, slice: Int, world: World[Individual], file: File, socialInequality: Double, e: Double): Unit = {
+    val index = day * 3 + slice
+    AggregatedSocialCategory.all.foreach { cat =>
+      def individualOfCategory = World.individualsVector[Individual].get(world).filter(Individual.socialCategoryV.get(_) == cat)
+      getCategoryFile(outputPath, cat) << s"""$index,$day,$slice,${Sex.toCode(cat.sex)},${AggregatedAge.toCode(cat.age)},${AggregatedEducation.toCode(cat.education)},${util.vectorStats(individualOfCategory).mkString(",")}"""
+    }
+    val size = World.individualsVector[Individual].get(world).size
+    val nbHealthy = World.individualsVector[Individual].get(world).count(_.healthy)
+    def ratio = nbHealthy.toDouble / size
+    def avgOpinion = World.individualsVector[Individual].get(world).map(_.opinion).sum / size
+    file.toScala << s"""$index,$day,$slice,$size,$nbHealthy,$ratio,$avgOpinion,$socialInequality,$e"""
+  }
   def run(
     maxProbaToSwitch: Double,
     constraintsStrength: Double,
@@ -48,34 +64,11 @@ object SimulationWithMap {
     val categories = outputPath.toScala / "health.csv"
     categories.parent.createDirectories()
     categories < "index,day,slice,effective,healthy,ratio,avgOpinion,socialInequality,e\n"
-    def getCategoryFile(cat: AggregatedSocialCategory) = {
-      outputPath.toScala / s"${Sex.toCode(cat.sex)}_${AggregatedAge.toCode(cat.age)}_${AggregatedEducation.toCode(cat.education)}.csv"
-    }
     AggregatedSocialCategory.all.foreach { cat =>
-      def f = getCategoryFile(cat)
+      def f = getCategoryFile(outputPath, cat)
       f < "index,day,slice,sex,age,educ,effective,healthy,ratio,avgOpinion\n"
     }
 
-    def writeFileByCategory(day: Int, slice: Int, world: World[Individual], file: File, socialInequality: Double, e: Double): Unit = {
-      def categoryInfo(category: Vector[Individual]) =
-        if (category.isEmpty) List(0, 0, 0.0)
-        else {
-          val categorySize = category.size
-          val nbHealthy = category.count(_.healthy)
-          val avgOpinion = category.map(_.opinion.toDouble).sum / categorySize
-          List(categorySize, nbHealthy, nbHealthy.toDouble / categorySize, avgOpinion)
-        }
-      val index = day * 3 + slice
-      AggregatedSocialCategory.all.foreach { cat =>
-        def individualOfCategory = World.individualsVector[Individual].get(world).filter(Individual.socialCategoryV.get(_) == cat)
-        getCategoryFile(cat) << s"""$index,$day,$slice,${Sex.toCode(cat.sex)},${AggregatedAge.toCode(cat.age)},${AggregatedEducation.toCode(cat.education)},${categoryInfo(individualOfCategory).mkString(",")}"""
-      }
-      val size = World.individualsVector[Individual].get(world).size
-      val nbHealthy = World.individualsVector[Individual].get(world).count(_.healthy)
-      def ratio = nbHealthy.toDouble / size
-      def avgOpinion = World.individualsVector[Individual].get(world).map(_.opinion).sum / size
-      file.toScala << s"""$index,$day,$slice,$size,$nbHealthy,$ratio,$avgOpinion,$socialInequality,$e"""
-    }
     val parameters = outputPath.toScala / "parameters.csv"
     parameters < "maxProbaToSwitch,constraintsStrength,inertiaCoefficient,healthyDietReward,interpersonalInfluence\n"
     parameters << s"$maxProbaToSwitch,$constraintsStrength,$inertiaCoefficient,$healthyDietReward,$interpersonalInfluence"
@@ -86,7 +79,7 @@ object SimulationWithMap {
           val e = observable.erreygersE(world)
           util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", maxValue = 0.5, fraction = 5)
           util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "location" / f"$day%02d_$slice.tiff", soc.toString, f"$day%02d_$slice", atHome = false, maxValue = 0.5, fraction = 5)
-          writeFileByCategory(day, slice, world, categories.toJava, soc, e)
+          writeFileByCategory(outputPath, day, slice, world, categories.toJava, soc, e)
         case None =>
           util.writeState(world, outputPath.toScala / "init.csv")
       }
