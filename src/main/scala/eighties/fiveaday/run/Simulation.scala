@@ -42,7 +42,6 @@ object Simulation {
     constraintsStrength: Double,
     inertiaCoefficient: Double,
     healthyDietReward: Double,
-    interpersonalInfluence: Double,
     days: Int,
     population: java.io.File,
     moves: java.io.File,
@@ -52,7 +51,6 @@ object Simulation {
     visitor: Option[(World[Individual], BoundingBox, Int, Option[(Int, Int)]) => Unit] = None): World[Individual] = {
 
     val healthCategory = generateHealthCategory(distributionConstraints)
-    val interactionMap = generateInteractionMap(distributionConstraints)
 
     def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
 
@@ -61,13 +59,10 @@ object Simulation {
 
       interchangeConviction(
         moved,
-        slice,
-        interactionMap,
         maxProbaToSwitch = maxProbaToSwitch,
         constraintsStrength = constraintsStrength,
         inertiaCoefficient = inertiaCoefficient,
         healthyDietReward = healthyDietReward,
-        interpersonalInfluence = interpersonalInfluence,
         rng
       )
     }
@@ -188,7 +183,6 @@ object Fit {
     constraintsStrength: Double,
     inertiaCoefficient: Double,
     healthyDietReward: Double,
-    interpersonalInfluence: Double,
     days: Int,
     population: java.io.File,
     moves: java.io.File,
@@ -202,7 +196,6 @@ object Fit {
         constraintsStrength = constraintsStrength,
         inertiaCoefficient = inertiaCoefficient,
         healthyDietReward = healthyDietReward,
-        interpersonalInfluence = interpersonalInfluence,
         days = days,
         population = population,
         moves = moves,
@@ -274,7 +267,6 @@ object SimulationApp extends App {
           constraintsStrength = constraintsStrength,
           inertiaCoefficient = inertiaCoefficient,
           healthyDietReward = healthyDietReward,
-          interpersonalInfluence = interpersonalInfluence,
           days = 6,
           population = worldFeatures,
           moves = moves,

@@ -96,7 +96,6 @@ object SimulationWithMap {
       constraintsStrength = constraintsStrength,
       inertiaCoefficient = inertiaCoefficient,
       healthyDietReward = healthyDietReward,
-      interpersonalInfluence = interpersonalInfluence,
       days = days,
       population = population,
       moves = moves,

@@ -27,31 +27,17 @@ object opinion {
   }
 
   object InterchangeConviction {
+
+    // C'est validé - Clémentine "Le nouveau code a l'air sensas'"
     def interchangeConvictionInCell(
      cell: Vector[Individual],
-     timeOfDay: Int,
-     interactions: Map[AggregatedSocialCategory, Interactions],
      maxProbaToSwitch: Double,
      constraintsStrength: Double,
      inertiaCoefficient: Double,
      healthyDietReward: Double,
-     interpersonalInfluence: Double,
      random: Random): Vector[Individual] = {
 
       def booleanToDouble(b: Boolean) = if(b) 1.0 else 0.0
-
-      def interactionProbability(individual: Individual) = timeOfDay match {
-        case 0 => interactions(Individual.socialCategoryV.get(individual)).breakfastInteraction
-        case 1 => interactions(Individual.socialCategoryV.get(individual)).lunchInteraction
-        case 2 => interactions(Individual.socialCategoryV.get(individual)).dinnerInteraction
-      }
-
-      def peering(cell: Vector[Individual]): (Vector[(Individual, Individual)], Vector[Individual]) = {
-        val (interactingPeople, passivePeople) = cell.partition { individual => random.nextDouble() < interactionProbability(individual) }
-        def randomizedInteractingPeople = random.shuffle(interactingPeople)
-        val (couples, singles) = randomizedInteractingPeople.grouped(2).toVector.partition(_.size == 2)
-        (couples.map { case Vector(i1, i2) => (i1, i2) }, passivePeople ++ singles.flatten)
-      }
 
       def dietRewardOpinion(individual: Individual) = {
         def opinion = Individual.opinion.get(individual)
@@ -59,12 +45,8 @@ object opinion {
         if(Individual.behaviourV.get(individual) == Healthy) getReward(opinion) else opinion
       }
 
-      def interactingOpinion(ego: Individual, partner: Option[Individual]): Opinion = partner.map(i => Individual.opinion.get(i)).getOrElse(Individual.opinion.get(ego))
-
-      def passiveOpinion(individual: Individual, healthRatio: Option[Double]): Opinion = healthRatio.map(_.toFloat).getOrElse(Individual.opinion.get(individual))
-
       def updateBehaviour(individual: Individual): Individual = {
-        
+
         def probaSwitchToUnhealthy = {
           val y =
             maxProbaToSwitch +
@@ -92,66 +74,57 @@ object opinion {
       }
 
       // Nb: Clémentine trouve ça clair ! => C'est confirmé
-      def updateIndividual(individual: Individual, partner: Option[Individual], healthyRatio: Option[Double]/*, interactions: Map[Individual, Individual]*/) = {
-        def a = inertiaCoefficient * dietRewardOpinion(individual)
-        def b = interpersonalInfluence * interactingOpinion(individual, partner)
-        def c = (1 - interpersonalInfluence) * passiveOpinion(individual, healthyRatio)
-        Individual.opinion.set((a + (1 - inertiaCoefficient) * (b + c)).toFloat)(individual)
+      def updateIndividual(averageOpinion: Double)(individual: Individual) = {
+        def newOpinion =
+          math.min(
+            1.0,
+            dietRewardOpinion(individual) +
+              (inertiaCoefficient * Individual.opinion.get(individual).toDouble +
+                (1 - inertiaCoefficient) * averageOpinion)
+          )
+        Individual.opinion.set(newOpinion.toFloat)(individual)
       }
 
-      def newCell = {
-        // Optimized version of Individual.behaviourV.get(i) == Healthy
-        val healthyRatio = if(cell.nonEmpty) Some(cell.count(i => i.healthy).toDouble / cell.size) else None
-        val (interactingPeople, _) = peering(cell)
-//
-//        interactingPeople.flatMap {
-//          case (i1, i2) => Vector(updateIndividual(i1, Some(i2), healthyRatio), updateIndividual(i2, Some(i1), healthyRatio))
-//        } ++ passivePeople.map(i => updateIndividual(i, None, healthyRatio))
-//
-        val interactions = (interactingPeople ++ interactingPeople.map(_.swap)).toMap
-        cell.map(i => updateIndividual(i, interactions.get(i), healthyRatio)).map(updateBehaviour)
-      }
+      def newCell =
+        if(cell.nonEmpty) {
+          val averageOpinion = cell.map(Individual.opinion.get).sum.toDouble / cell.size
+          cell.map { updateIndividual(averageOpinion) _ andThen updateBehaviour }
+        } else cell
 
       newCell
     }
+
   }
 
   def interchangeConviction(
     world: World[Individual],
-    timeOfDay: Int,
-    interactions: Map[AggregatedSocialCategory, Interactions],
     maxProbaToSwitch: Double,
     constraintsStrength: Double,
     inertiaCoefficient: Double,
     healthyDietReward: Double,
-    interpersonalInfluence: Double,
     random: Random): World[Individual] = {
 
-    val newIndividuals = Array.ofDim[Individual](world.individuals.length)
-    var index = 0
-
-    for {
-      (c, _) <- Index.indexIndividuals(world, Individual.locationV.get).cells.flatten.zipWithIndex
-    } {
-      //if (i%1000 == 0) println(Calendar.getInstance.getTime + s" conviction in cell $i")
-
-      val newCell = InterchangeConviction.interchangeConvictionInCell(
-        c.toVector,
-        timeOfDay,
-        interactions,
-        maxProbaToSwitch,
-        constraintsStrength,
-        inertiaCoefficient,
-        healthyDietReward,
-        interpersonalInfluence,
-        random)
+      val newIndividuals = Array.ofDim[Individual](world.individuals.length)
+      var index = 0
 
       for {
-        individual <- newCell
+        (c, _) <- Index.indexIndividuals(world, Individual.locationV.get).cells.flatten.zipWithIndex
       } {
-        newIndividuals(index) = individual
-        index += 1
-      }
+        //if (i%1000 == 0) println(Calendar.getInstance.getTime + s" conviction in cell $i")
+        val newCell = InterchangeConviction.interchangeConvictionInCell(
+          c.toVector,
+          maxProbaToSwitch,
+          constraintsStrength,
+          inertiaCoefficient,
+          healthyDietReward,
+          random)
+
+        for {
+          individual <- newCell
+        } {
+          newIndividuals(index) = individual
+          index += 1
+        }
     }
 
     World.individuals.set(newIndividuals)(world)
