@@ -77,11 +77,12 @@ object observable {
   def numberOfHealthy(world: World[Individual]): Int = world.individuals.count(_.healthy)
   def numberOfHealthyV(world: Vector[Individual]): Int = world.count(_.healthy)
 
-  def weightedInequality(numberOfHighHealthy:Double, numberOfHigh:Double, numberOfLowHealthy:Double, numberOfLow:Double, total: Double): Double = {
+  def weightedInequality(numberOfHighHealthy: Double, numberOfHigh:Double, numberOfLowHealthy:Double, numberOfLow:Double, total: Double): Double = {
     val propHighHealthy = if (numberOfHighHealthy == 0) (numberOfHighHealthy + 1) / (numberOfHigh + 1) else numberOfHighHealthy / numberOfHigh
     val propLowHealthy = if (numberOfLowHealthy == 0) (numberOfLowHealthy + 1) / (numberOfLow + 1) else numberOfLowHealthy / numberOfLow
     (propHighHealthy / propLowHealthy) * total
   }
+
   def weightedInequalityRatioBySexAge(world: World[Individual]): Double = {
     val all = world.individuals.length
     val bySA =
@@ -285,7 +286,6 @@ object observable {
       case (cat, propOfHealthy) =>
         val sim = simulated(cat)
         val num = numberOfIndividuals(cat)
-        println(s"${propOfHealthy * num} -- $sim => ${math.abs(propOfHealthy * num - sim)}")
         math.abs(propOfHealthy * num - sim)
     }.toArray.sum
   }
