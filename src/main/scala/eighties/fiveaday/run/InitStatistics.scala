@@ -81,13 +81,15 @@ object InitStatistics extends App {
 
       log("loading population")
       val worldFeatures = config.population.get
-      val moves = config.moves.get
+//      val moves = config.moves.get
       val distributionConstraints = config.distribution.get
       val outputPath = config.output.get
       val replications = config.replications
 
       val healthyStats = mutable.Map[AggregatedSocialCategory, Double]()
       val opinionStats = mutable.Map[AggregatedSocialCategory, Double]()
+      val healthyOpinionStats = mutable.Map[AggregatedSocialCategory, Double]()
+      val unhealthyOpinionStats = mutable.Map[AggregatedSocialCategory, Double]()
       for {_ <- 0 until replications} {
         val healthCategory = generateHealthCategory(distributionConstraints)
         def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
@@ -98,13 +100,18 @@ object InitStatistics extends App {
           Individual.locationV,
           Individual.homeV, rng)
         AggregatedSocialCategory.all.map { cat =>
-          def individualOfCategory = World.individualsVector[Individual].get(world).filter(Individual.socialCategoryV.get(_) == cat)
+          val individualOfCategory = World.individualsVector[Individual].get(world).filter(Individual.socialCategoryV.get(_) == cat)
+          val healthyOfCategory = individualOfCategory.filter(_.healthy)
+          val unhealthyOfCategory = individualOfCategory.filterNot(_.healthy)
           val categorySize = individualOfCategory.size
-//          println(s"cat = ${cat} - categorySize = ${categorySize} - healthy = ${individualOfCategory.count(_.healthy)}")
           val propHealthy = individualOfCategory.count(_.healthy).toDouble / categorySize
           val avgOpinion = individualOfCategory.map(_.opinion.toDouble).sum / categorySize
+          val healthAvgOpinion = healthyOfCategory.map(_.opinion.toDouble).sum / healthyOfCategory.size
+          val unhealthyAvgOpinion = unhealthyOfCategory.map(_.opinion.toDouble).sum / unhealthyOfCategory.size
           healthyStats.put(cat, healthyStats.getOrElse(cat, 0.0) + propHealthy)
           opinionStats.put(cat, opinionStats.getOrElse(cat, 0.0) + avgOpinion)
+          healthyOpinionStats.put(cat, healthyOpinionStats.getOrElse(cat, 0.0) + healthAvgOpinion)
+          unhealthyOpinionStats.put(cat, unhealthyOpinionStats.getOrElse(cat, 0.0) + unhealthyAvgOpinion)
         }
       }
       // the last simulation: we write this down now
@@ -112,11 +119,13 @@ object InitStatistics extends App {
       // global statistics
       val file = outputPath.toScala / "statistics.csv"
       // headers
-      file < Seq("sex","age","education","healthy","opinion\n").mkString(",")
+      file < Seq("sex","age","education","healthy","opinion","healthyOpinion","unhealthyOpinion").mkString(",")+"\n"
       AggregatedSocialCategory.all.map { cat =>
         file << (Seq(s"${cat.sex}", s"${cat.age}", s"${cat.education}") ++
-          Seq(s"${healthyStats(cat) / (replications)}") ++
-          Seq(s"${opinionStats(cat) / (replications)}")).mkString(",")
+          Seq(s"${healthyStats(cat) / replications}") ++
+          Seq(s"${opinionStats(cat) / replications}") ++
+          Seq(s"${healthyOpinionStats(cat) / replications}") ++
+          Seq(s"${unhealthyOpinionStats(cat) / replications}")).mkString(",")
       }
       log("all done!")
     case _ =>
