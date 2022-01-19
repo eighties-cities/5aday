@@ -84,8 +84,8 @@ object health {
               habit = cs(header("habit_constraint")).toDouble,
               budget = cs(header("budget_constraint")).toDouble,
               time = cs(header("time_constraint")).toDouble,
-              opinionDistributionH = cs.slice(indexH1, indexH5).map(_.toDouble).toVector,
-              opinionDistributionU = cs.slice(indexU1, indexU5).map(_.toDouble).toVector
+              opinionDistributionH = cs.slice(indexH1, indexH5 + 1).map(_.toDouble).toVector,
+              opinionDistributionU = cs.slice(indexU1, indexU5 + 1).map(_.toDouble).toVector
             )
       }.toMap
     (category: AggregatedSocialCategory, random: Random) => {
@@ -99,7 +99,7 @@ object health {
       val distributionU = line.opinionDistributionU
       val distribution = if (behaviour == Healthy) distributionH else distributionU
 //      val opinion = new RasterVariate(distribution.toArray, Seq(distribution.size)).compute(random).head
-      val opinion = multinomial[Double](Array(0,0.25,0.5,0.75,1.0) zip distribution.toArray)(random)
+      val opinion = multinomial[Double](Array(0.1,0.3,0.5,0.7,0.9) zip distribution.toArray)(random)
       HealthCategory(opinion.toFloat, behaviour, constraints)
     }
   }
