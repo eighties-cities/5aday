@@ -33,7 +33,7 @@ libraryDependencies ++= Seq (
  
 excludeDependencies += ExclusionRule("org.typelevel", "cats-kernel_2.13")
 
-scalacOptions ++= Seq("-target:jvm-1.8", "-language:postfixOps", "-Ymacro-annotations")
+scalacOptions ++= Seq("-release:11", "-language:postfixOps")
 
 enablePlugins(SbtOsgi)
 
