@@ -40,7 +40,7 @@ object opinion {
 
       def dietRewardOpinion(individual: Individual) = {
         def opinion = Individual.opinion.get(individual)
-        def getReward(o: Opinion): Opinion =  healthyDietReward.toFloat
+        def getReward(o: Opinion): Opinion =  healthyDietReward.toFloat * o
         if(Individual.behaviourV.get(individual) == Healthy) getReward(opinion) else 0.0f
       }
 
