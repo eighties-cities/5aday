@@ -5,9 +5,9 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "3.1.0"
+scalaVersion := "2.13.8" //"3.1.0"
 
-crossScalaVersions := Seq("3.1.0")
+crossScalaVersions := Seq("2.13.8")
 
 //val monocleVersion = "3.0.1"
 
@@ -31,9 +31,9 @@ libraryDependencies ++= Seq (
   "javax.media" % "jai-core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
 )
  
-excludeDependencies += ExclusionRule("org.typelevel", "cats-kernel_2.13")
+//excludeDependencies += ExclusionRule("org.typelevel", "cats-kernel_2.13")
 
-scalacOptions ++= Seq("-release:11", "-language:postfixOps")
+scalacOptions ++= Seq(/*"-release:11",*/ "-language:postfixOps")
 
 enablePlugins(SbtOsgi)
 
@@ -67,4 +67,4 @@ OsgiKeys.additionalHeaders :=  Map(
 
 OsgiKeys.embeddedJars := (Compile / Keys.externalDependencyClasspath).value map (_.data) filter (f=> f.getName startsWith "gt-")
 
-scalacOptions ++= Seq("-deprecation", "-feature")
+//scalacOptions ++= Seq("-deprecation", "-feature")
