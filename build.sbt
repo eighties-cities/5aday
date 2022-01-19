@@ -5,11 +5,11 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.13.6"
+scalaVersion := "3.1.0"
 
-crossScalaVersions := Seq("2.13.6")
+crossScalaVersions := Seq("3.1.0")
 
-val monocleVersion = "2.0.1"
+//val monocleVersion = "3.0.1"
 
 resolvers ++= Seq(
   "osgeo" at "https://repo.osgeo.org/repository/release/",
@@ -21,9 +21,9 @@ resolvers -= DefaultMavenRepository
 
 libraryDependencies ++= Seq (
   "eighties" %% "h24" % "1.0-SNAPSHOT",
-  "com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
-  "com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
-  "com.github.julien-truffaut"  %%  "monocle-macro"   % monocleVersion,
+  //"com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
+  //"com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
+  //"com.github.julien-truffaut"  %%  "monocle-macro"   % monocleVersion,
   "org.apache.commons" % "commons-compress" % "1.11",
   "org.apache.commons" % "commons-math3" % "3.6.1",
   "org.tukaani" % "xz" % "1.6",
@@ -31,6 +31,7 @@ libraryDependencies ++= Seq (
   "javax.media" % "jai-core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
 )
  
+excludeDependencies += ExclusionRule("org.typelevel", "cats-kernel_2.13")
 
 scalacOptions ++= Seq("-target:jvm-1.8", "-language:postfixOps", "-Ymacro-annotations")
 

@@ -22,7 +22,7 @@ import eighties.h24.dynamic.MoveMatrix.TimeSlice
 import eighties.h24.generation._
 import eighties.h24.space._
 import monocle.function.all._
-import monocle.macros.Lenses
+import monocle._
 import eighties.h24.social._
 import monocle.{Iso, PLens}
 
@@ -60,7 +60,7 @@ object population {
     def shortToChangeConstraintsIso: Iso[AggregatedAge, ChangeConstraints] = monocle.Iso[Byte, ChangeConstraints](i => all(i - Byte.MinValue))(c => (all.indexOf(c) + Byte.MinValue).toByte)
   }
 
-  @Lenses case class ChangeConstraints(habit: Boolean, budget: Boolean, time: Boolean)
+  case class ChangeConstraints(habit: Boolean, budget: Boolean, time: Boolean)
 
   object HealthCategory {
     def apply(
@@ -70,7 +70,7 @@ object population {
       new HealthCategory(opinion, behaviour, ChangeConstraints.shortToChangeConstraintsIso(changeConstraints))
   }
 
-  @Lenses case class HealthCategory(
+  case class HealthCategory(
     opinion: Opinion,
     behaviour: Behaviour,
     changeConstraints: Byte)
@@ -113,9 +113,9 @@ object population {
 
     def arrayMapIso: Iso[Array[(TimeSlice, Int)], Map[TimeSlice, Int]] = monocle.Iso[Array[(TimeSlice, Int)], Map[TimeSlice, Int]](_.toMap)(_.toArray)
 
-    def locationV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Individual.location composeIso Location.indexIso
-    def homeV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Individual.home composeIso Location.indexIso
-    def socialCategoryV: PLens[Individual, Individual, AggregatedSocialCategory, AggregatedSocialCategory] = Individual.socialCategory composeIso AggregatedSocialCategory.shortAggregatedSocialCategoryIso
+    def locationV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Focus[Individual](_.location) composeIso Location.indexIso
+    def homeV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Focus[Individual](_.home) composeIso Location.indexIso
+    def socialCategoryV: PLens[Individual, Individual, AggregatedSocialCategory, AggregatedSocialCategory] = Focus[Individual](_.socialCategory) composeIso AggregatedSocialCategory.shortAggregatedSocialCategoryIso
 
     def arrayToMapOfStableLocation(array: Array[Short]): Map[TimeSlice, (Int, Int)] =
       (timeSlices zip array).filter(_._2 != Location.noLocationIndex).map { case(a, b) => a -> Location.fromIndex(b) }.toMap
@@ -125,22 +125,25 @@ object population {
     def timeSlicesMapIso: Iso[Array[ShortAggregatedSocialCategory], Map[TimeSlice, (Int, Int)]] = monocle.Iso[Array[Short], Map[TimeSlice, Location]] (arrayToMapOfStableLocation) (mapOfStableLocationToArray)
 
     def stableDestinationsV(i: Individual): Map[TimeSlice, (Int, Int)] = timeSlicesMapIso.get(Array(i.home, i.dayDestination, Location.noLocationIndex))
-    def dayDestinationV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Individual.dayDestination composeIso Location.indexIso
+    def dayDestinationV: PLens[Individual, Individual, (Int, Int), (Int, Int)] = Focus[Individual](_.dayDestination) composeIso Location.indexIso
 
-    def education: PLens[Individual, Individual, AggregatedEducation, AggregatedEducation] = socialCategoryV composeLens AggregatedSocialCategory.education
-    def age: PLens[Individual, Individual, AggregatedAge, AggregatedAge] = socialCategoryV composeLens AggregatedSocialCategory.age
-    def sex: PLens[Individual, Individual, Sex, Sex] = socialCategoryV composeLens AggregatedSocialCategory.sex
+    def education: PLens[Individual, Individual, AggregatedEducation, AggregatedEducation] = socialCategoryV composeLens Focus[AggregatedSocialCategory](_.education)
+    def age: PLens[Individual, Individual, AggregatedAge, AggregatedAge] = socialCategoryV composeLens Focus[AggregatedSocialCategory](_.age)
+    def sex: PLens[Individual, Individual, Sex, Sex] = socialCategoryV composeLens Focus[AggregatedSocialCategory](_.sex)
     def i: PLens[Individual, Individual, Int, Int] = Individual.locationV composeLens first
     def j: PLens[Individual, Individual, Int, Int] = Individual.locationV composeLens second
 
-    def changeConstraintsV: PLens[Individual, Individual, ChangeConstraints, ChangeConstraints] = changeConstraints composeIso ChangeConstraints.shortToChangeConstraintsIso
+    def changeConstraintsV: PLens[Individual, Individual, ChangeConstraints, ChangeConstraints] = Focus[Individual](_.changeConstraints) composeIso ChangeConstraints.shortToChangeConstraintsIso
     def behaviourV: PLens[Individual, Individual, Behaviour, Behaviour] = healthy composeIso Behaviour.booleanIso
-    def budget: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens ChangeConstraints.budget
-    def habit: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens ChangeConstraints.habit
-    def time: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens ChangeConstraints.time
+    def budget: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens Focus[ChangeConstraints](_.budget)
+    def habit: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens Focus[ChangeConstraints](_.habit)
+    def time: PLens[Individual, Individual, Boolean, Boolean] = changeConstraintsV composeLens Focus[ChangeConstraints](_.time)
+
+    def healthy = Focus[Individual](_.healthy)
+    def opinion = Focus[Individual](_.opinion)
   }
 
-  @Lenses case class Individual(
+  case class Individual(
     socialCategory: Byte,
     opinion: Opinion,
     healthy: Boolean,

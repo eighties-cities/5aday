@@ -3,6 +3,7 @@ package eighties.fiveaday
 import eighties.fiveaday.population._
 import eighties.h24.space._
 import org.apache.commons.math3.util.FastMath
+import monocle._
 
 import scala.util.Random
 
@@ -125,7 +126,7 @@ object opinion {
         }
     }
 
-    World.individuals.set(newIndividuals)(world)
+    Focus[World[Individual]](_.individuals).set(newIndividuals)(world)
   }
 }
 

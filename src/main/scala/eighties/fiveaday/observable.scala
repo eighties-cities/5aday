@@ -24,6 +24,7 @@ import eighties.fiveaday.health._
 import eighties.h24.social._
 import eighties.fiveaday.population._
 import eighties.h24.space._
+import monocle._
 
 object observable {
 
@@ -31,7 +32,7 @@ object observable {
       for {
         ed <- AggregatedEducation.all
         level = World.individualsVector[Individual].get(world).filter(i => Individual.education.get(i)  == ed)
-      } yield ed -> b(level.map(Individual.opinion.get))
+      } yield ed -> b(level.map(Focus[Individual](_.opinion).get))
 
 //  def resume(world: World) = {
 //    import breeze.linalg._
@@ -40,10 +41,10 @@ object observable {
 //  }
 
   def filterIndividualBySexAge(sex: Sex, age: AggregatedAge)(world: World[Individual]): World[Individual] =
-    World.individuals[Individual].modify(_.filter(i => Individual.sex.get(i) == sex && Individual.age.get(i) == age))(world)
+    Focus[World[Individual]](_.individuals).modify(_.filter(i => Individual.sex.get(i) == sex && Individual.age.get(i) == age))(world)
 
   def sexAgeEducation(sex: Sex, age: AggregatedAge, education: AggregatedEducation)(world: World[Individual]): World[Individual] =
-    World.individuals[Individual].modify(_.filter(i => Individual.sex.get(i) == sex && Individual.age.get(i) == age && Individual.education.get(i) == education))(world)
+    Focus[World[Individual]](_.individuals).modify(_.filter(i => Individual.sex.get(i) == sex && Individual.age.get(i) == age && Individual.education.get(i) == education))(world)
 
   sealed class HealthCategories(val numberOfHigh: Int, val numberOfHighHealthy: Int, val numberOfMiddle: Int, val numberOfMiddleHealthy: Int, val numberOfLow: Int, val numberOfLowHealthy: Int)
   /**
@@ -77,11 +78,12 @@ object observable {
   def numberOfHealthy(world: World[Individual]): Int = world.individuals.count(_.healthy)
   def numberOfHealthyV(world: Vector[Individual]): Int = world.count(_.healthy)
 
-  def weightedInequality(numberOfHighHealthy:Double, numberOfHigh:Double, numberOfLowHealthy:Double, numberOfLow:Double, total: Double): Double = {
+  def weightedInequality(numberOfHighHealthy: Double, numberOfHigh:Double, numberOfLowHealthy:Double, numberOfLow:Double, total: Double): Double = {
     val propHighHealthy = if (numberOfHighHealthy == 0) (numberOfHighHealthy + 1) / (numberOfHigh + 1) else numberOfHighHealthy / numberOfHigh
     val propLowHealthy = if (numberOfLowHealthy == 0) (numberOfLowHealthy + 1) / (numberOfLow + 1) else numberOfLowHealthy / numberOfLow
     (propHighHealthy / propLowHealthy) * total
   }
+
   def weightedInequalityRatioBySexAge(world: World[Individual]): Double = {
     val all = world.individuals.length
     val bySA =
@@ -285,7 +287,6 @@ object observable {
       case (cat, propOfHealthy) =>
         val sim = simulated(cat)
         val num = numberOfIndividuals(cat)
-        println(s"${propOfHealthy * num} -- $sim => ${math.abs(propOfHealthy * num - sim)}")
         math.abs(propOfHealthy * num - sim)
     }.toArray.sum
   }
