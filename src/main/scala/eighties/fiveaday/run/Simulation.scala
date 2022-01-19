@@ -30,7 +30,7 @@ import eighties.h24.simulation._
 import eighties.h24.social.AggregatedSocialCategory
 import eighties.h24.space._
 import eighties.h24.tools.Log.log
-import monocle.Lens
+import monocle._
 import scopt.OParser
 
 import scala.util.Random
@@ -149,7 +149,7 @@ object Simulation {
     var index = 0
 
     for {
-      (line, i) <- Index.cells.get(Index.indexIndividuals(world, location)).zipWithIndex
+      (line, i) <- Focus[Index[Individual]](_.cells).get(Index.indexIndividuals(world, location)).zipWithIndex
       (individuals, j) <- line.zipWithIndex
     } {
       val workTimeMovesFromCell = locatedCell(dayTimeSlice, i, j)
@@ -169,7 +169,7 @@ object Simulation {
       }
     }
 
-    World.individuals.set(newIndividuals)(world)
+    Focus[World[Individual]](_.individuals).set(newIndividuals)(world)
   }
 
 }
