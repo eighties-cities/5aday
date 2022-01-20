@@ -38,7 +38,7 @@ object opinion {
 
       def booleanToDouble(b: Boolean) = if(b) 1.0 else 0.0
 
-      def dietRewardOpinion(individual: Individual) = {
+      def dietReward(individual: Individual) = {
         def opinion = Individual.opinion.get(individual)
         def getReward(o: Opinion): Opinion =  healthyDietReward.toFloat * o
         if(Individual.behaviourV.get(individual) == Healthy) getReward(opinion) else 0.0f
@@ -77,7 +77,7 @@ object opinion {
         def newOpinion =
           math.min(
             1.0,
-            dietRewardOpinion(individual) +
+            dietReward(individual) +
               (inertiaCoefficient * Individual.opinion.get(individual).toDouble +
                 (1 - inertiaCoefficient) * averageOpinion)
           )
