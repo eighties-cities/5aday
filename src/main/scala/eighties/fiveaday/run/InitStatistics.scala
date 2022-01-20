@@ -31,6 +31,8 @@ import java.io.File
 import scala.collection.mutable
 import scala.util.Random
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+
 object InitStatistics extends App {
 
   case class Config(
@@ -74,6 +76,12 @@ object InitStatistics extends App {
     )
   }
 
+  def stats(v: Seq[Double]) = {
+    val stats = new DescriptiveStatistics
+    v.foreach(stats.addValue)
+    (stats.getMean,stats.getPercentile(50))
+  }
+
   OParser.parse(parser, args, Config()) match {
     case Some(config) =>
       val seed = config.seed.getOrElse(42L)
@@ -88,8 +96,11 @@ object InitStatistics extends App {
 
       val healthyStats = mutable.Map[AggregatedSocialCategory, Double]()
       val opinionStats = mutable.Map[AggregatedSocialCategory, Double]()
+      val opinionMedStats = mutable.Map[AggregatedSocialCategory, Seq[Double]]()
       val healthyOpinionStats = mutable.Map[AggregatedSocialCategory, Double]()
+      val healthyOpinionMedStats = mutable.Map[AggregatedSocialCategory, Seq[Double]]()
       val unhealthyOpinionStats = mutable.Map[AggregatedSocialCategory, Double]()
+      val unhealthyOpinionMedStats = mutable.Map[AggregatedSocialCategory, Seq[Double]]()
       for {_ <- 0 until replications} {
         val healthCategory = generateHealthCategory(distributionConstraints)
         def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
@@ -105,13 +116,16 @@ object InitStatistics extends App {
           val unhealthyOfCategory = individualOfCategory.filterNot(_.healthy)
           val categorySize = individualOfCategory.size
           val propHealthy = individualOfCategory.count(_.healthy).toDouble / categorySize
-          val avgOpinion = individualOfCategory.map(_.opinion.toDouble).sum / categorySize
-          val healthAvgOpinion = healthyOfCategory.map(_.opinion.toDouble).sum / healthyOfCategory.size
-          val unhealthyAvgOpinion = unhealthyOfCategory.map(_.opinion.toDouble).sum / unhealthyOfCategory.size
           healthyStats.put(cat, healthyStats.getOrElse(cat, 0.0) + propHealthy)
-          opinionStats.put(cat, opinionStats.getOrElse(cat, 0.0) + avgOpinion)
-          healthyOpinionStats.put(cat, healthyOpinionStats.getOrElse(cat, 0.0) + healthAvgOpinion)
-          unhealthyOpinionStats.put(cat, unhealthyOpinionStats.getOrElse(cat, 0.0) + unhealthyAvgOpinion)
+          val statsOpinion = stats(individualOfCategory.map(_.opinion.toDouble))
+          opinionStats.put(cat, opinionStats.getOrElse(cat, 0.0) + statsOpinion._1)
+          opinionMedStats.put(cat, opinionMedStats.getOrElse(cat, Seq[Double]()) :+ statsOpinion._2)
+          val statsHealthyOpinion = stats(healthyOfCategory.map(_.opinion.toDouble))
+          healthyOpinionStats.put(cat, healthyOpinionStats.getOrElse(cat, 0.0) + statsHealthyOpinion._1)
+          healthyOpinionMedStats.put(cat, healthyOpinionMedStats.getOrElse(cat, Seq()) :+ statsHealthyOpinion._2)
+          val statsUnhealthyOpinion = stats(unhealthyOfCategory.map(_.opinion.toDouble))
+          unhealthyOpinionStats.put(cat, unhealthyOpinionStats.getOrElse(cat, 0.0) + statsUnhealthyOpinion._1)
+          unhealthyOpinionMedStats.put(cat, unhealthyOpinionMedStats.getOrElse(cat, Seq()) :+ statsUnhealthyOpinion._2)
         }
       }
       // the last simulation: we write this down now
@@ -119,13 +133,20 @@ object InitStatistics extends App {
       // global statistics
       val file = outputPath.toScala / "statistics.csv"
       // headers
-      file < Seq("sex","age","education","healthy","opinion","healthyOpinion","unhealthyOpinion").mkString(",")+"\n"
+      file < Seq("sex","age","education","healthy","opinionAvg","opinionMed",
+        "healthyAvgOpinion","healthyMedOpinion","unhealthyAvgOpinion","unhealthyMedOpinion").mkString(",")+"\n"
       AggregatedSocialCategory.all.map { cat =>
+        val statsOpinion = stats(opinionMedStats(cat))
+        val statsHealthyOpinion = stats(healthyOpinionMedStats(cat))
+        val statsUnhealthyOpinion = stats(unhealthyOpinionMedStats(cat))
         file << (Seq(s"${cat.sex}", s"${cat.age}", s"${cat.education}") ++
           Seq(s"${healthyStats(cat) / replications}") ++
           Seq(s"${opinionStats(cat) / replications}") ++
+          Seq(s"${statsOpinion._2}") ++
           Seq(s"${healthyOpinionStats(cat) / replications}") ++
-          Seq(s"${unhealthyOpinionStats(cat) / replications}")).mkString(",")
+          Seq(s"${statsHealthyOpinion._2}") ++
+          Seq(s"${unhealthyOpinionStats(cat) / replications}") ++
+          Seq(s"${statsUnhealthyOpinion._2}")).mkString(",")
       }
       log("all done!")
     case _ =>
