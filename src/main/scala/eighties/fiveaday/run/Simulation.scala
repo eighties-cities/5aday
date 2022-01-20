@@ -30,7 +30,7 @@ import eighties.h24.simulation._
 import eighties.h24.social.AggregatedSocialCategory
 import eighties.h24.space._
 import eighties.h24.tools.Log.log
-import monocle.Lens
+import monocle._
 import scopt.OParser
 
 import scala.util.Random
@@ -42,7 +42,6 @@ object Simulation {
     constraintsStrength: Double,
     inertiaCoefficient: Double,
     healthyDietReward: Double,
-    interpersonalInfluence: Double,
     days: Int,
     population: java.io.File,
     moves: java.io.File,
@@ -52,7 +51,6 @@ object Simulation {
     visitor: Option[(World[Individual], BoundingBox, Int, Option[(Int, Int)]) => Unit] = None): World[Individual] = {
 
     val healthCategory = generateHealthCategory(distributionConstraints)
-    val interactionMap = generateInteractionMap(distributionConstraints)
 
     def buildIndividual(feature: IndividualFeature, random: Random) = Individual(feature, healthCategory, random)
 
@@ -61,13 +59,10 @@ object Simulation {
 
       interchangeConviction(
         moved,
-        slice,
-        interactionMap,
         maxProbaToSwitch = maxProbaToSwitch,
         constraintsStrength = constraintsStrength,
         inertiaCoefficient = inertiaCoefficient,
         healthyDietReward = healthyDietReward,
-        interpersonalInfluence = interpersonalInfluence,
         rng
       )
     }
@@ -154,7 +149,7 @@ object Simulation {
     var index = 0
 
     for {
-      (line, i) <- Index.cells.get(Index.indexIndividuals(world, location)).zipWithIndex
+      (line, i) <- Focus[Index[Individual]](_.cells).get(Index.indexIndividuals(world, location)).zipWithIndex
       (individuals, j) <- line.zipWithIndex
     } {
       val workTimeMovesFromCell = locatedCell(dayTimeSlice, i, j)
@@ -174,7 +169,7 @@ object Simulation {
       }
     }
 
-    World.individuals.set(newIndividuals)(world)
+    Focus[World[Individual]](_.individuals).set(newIndividuals)(world)
   }
 
 }
@@ -188,7 +183,6 @@ object Fit {
     constraintsStrength: Double,
     inertiaCoefficient: Double,
     healthyDietReward: Double,
-    interpersonalInfluence: Double,
     days: Int,
     population: java.io.File,
     moves: java.io.File,
@@ -202,7 +196,6 @@ object Fit {
         constraintsStrength = constraintsStrength,
         inertiaCoefficient = inertiaCoefficient,
         healthyDietReward = healthyDietReward,
-        interpersonalInfluence = interpersonalInfluence,
         days = days,
         population = population,
         moves = moves,
@@ -274,7 +267,6 @@ object SimulationApp extends App {
           constraintsStrength = constraintsStrength,
           inertiaCoefficient = inertiaCoefficient,
           healthyDietReward = healthyDietReward,
-          interpersonalInfluence = interpersonalInfluence,
           days = 6,
           population = worldFeatures,
           moves = moves,

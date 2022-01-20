@@ -5,16 +5,11 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.13.5"
+scalaVersion := "3.1.0"
 
-crossScalaVersions := Seq("2.12.12", "2.13.5")
+crossScalaVersions := Seq("3.1.0")
 
-
-//val monocleVersion = "1.5.0-cats"
-val monocleVersion = "2.0.1"
-
-//val geotoolsVersion = "21.0
-//val breezeVersion = "0.13.2"
+//val monocleVersion = "3.0.1"
 
 resolvers ++= Seq(
   "osgeo" at "https://repo.osgeo.org/repository/release/",
@@ -26,51 +21,19 @@ resolvers -= DefaultMavenRepository
 
 libraryDependencies ++= Seq (
   "eighties" %% "h24" % "1.0-SNAPSHOT",
-  "com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
-  "com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
-  "com.github.julien-truffaut"  %%  "monocle-macro"   % monocleVersion,
-  //"org.geotools" % "geotools" % geotoolsVersion,
-  /*"org.geotools" % "gt-referencing" % geotoolsVersion,
-  "org.geotools" % "gt-shapefile" % geotoolsVersion,
-  "org.geotools" % "gt-epsg-wkt" % geotoolsVersion,
-  "org.geotools" % "gt-cql" % geotoolsVersion,
-  "org.geotools" % "gt-geotiff" % geotoolsVersion,
-  "org.geotools" % "gt-image" % geotoolsVersion,
-  "org.geotools" % "gt-coverage" % geotoolsVersion,
-  "org.geotools" % "gt-geojson" % geotoolsVersion,*/
-  //"com.github.tototoshi" %% "scala-csv" % "1.3.4",
+  //"com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
+  //"com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
+  //"com.github.julien-truffaut"  %%  "monocle-macro"   % monocleVersion,
   "org.apache.commons" % "commons-compress" % "1.11",
   "org.apache.commons" % "commons-math3" % "3.6.1",
   "org.tukaani" % "xz" % "1.6",
-  //"com.github.pathikrit" %% "better-files" % "2.17.1",
-  //"org.scalanlp" %% "breeze" % breezeVersion,
-  //"org.scalanlp" %% "breeze-natives" % breezeVersion,
-  //"org.scalanlp" %% "breeze-viz" % breezeVersion,
-  //"org.typelevel"  %% "squants"  % "1.1.0",
   "joda-time" % "joda-time" % "2.9.7",
-  //"com.thoughtworks.xstream" % "xstream" % "1.4.9",
-  //"io.suzaku" %% "boopickle" % "1.2.6",
-  //"it.geosolutions.jaiext" % "jaiext" % "1.0.20"
   "javax.media" % "jai-core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-//  "javax.media" % "jai_codec" % "1.1.3" % "runtime",
-//  "javax.media" % "jai_imageio" % "1.1" % "runtime"
 )
  
-//addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+excludeDependencies += ExclusionRule("org.typelevel", "cats-kernel_2.13")
 
-scalacOptions ++= {
-  scalaBinaryVersion.value match {
-    case x if x.startsWith("2.12") => Seq("-target:jvm-1.8")
-    case _ => Seq("-target:jvm-1.8", "-language:postfixOps", "-Ymacro-annotations")
-  }
-}
-
-libraryDependencies ++= {
-  scalaBinaryVersion.value match {
-    case x if x.startsWith("2.12") => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
-    case _ => Seq()
-  }
-}
+scalacOptions ++= Seq(/*"-release:11",*/ "-language:postfixOps")
 
 enablePlugins(SbtOsgi)
 
@@ -91,7 +54,7 @@ OsgiKeys.requireCapability := """osgi.ee; osgi.ee="JavaSE";version:List="1.8,1.9
 
 //excludeFilter in unmanagedSources := "OpinionMapper.scala" || "MapPopulation.scala" || "worldMapper.scala"
 
-excludeFilter in unmanagedSources := "OpinionMapper.scala"
+unmanagedSources / excludeFilter := "OpinionMapper.scala"
 
 OsgiKeys.additionalHeaders :=  Map(
   "Specification-Title" -> "Spec Title",
@@ -102,9 +65,6 @@ OsgiKeys.additionalHeaders :=  Map(
   "Implementation-Vendor" -> "Eighties"
 )
 
-OsgiKeys.embeddedJars := (Keys.externalDependencyClasspath in Compile).value map (_.data) filter (f=> f.getName startsWith "gt-")
+OsgiKeys.embeddedJars := (Compile / Keys.externalDependencyClasspath).value map (_.data) filter (f=> f.getName startsWith "gt-")
 
-// do not use coursier at the moment: it fails on jai_core for some reason
-//useCoursier := false
-
-scalacOptions ++= Seq("-deprecation", "-feature")
+//scalacOptions ++= Seq("-deprecation", "-feature")

@@ -35,19 +35,18 @@ import java.io.File
 import scala.util.Random
 object SimulationWithBeforeAndAfterMaps {
   def run(
-           maxProbaToSwitch: Double,
-           constraintsStrength: Double,
-           inertiaCoefficient: Double,
-           healthyDietReward: Double,
-           interpersonalInfluence: Double,
-           days: Int,
-           population: java.io.File,
-           moves: java.io.File,
-           distributionConstraints: java.io.File,
-           outputPath: java.io.File,
-           moveType: MoveType,
-           rng: Random,
-           export: Boolean): World[Individual] = {
+    maxProbaToSwitch: Double,
+    constraintsStrength: Double,
+    inertiaCoefficient: Double,
+    healthyDietReward: Double,
+    days: Int,
+    population: java.io.File,
+    moves: java.io.File,
+    distributionConstraints: java.io.File,
+    outputPath: java.io.File,
+    moveType: MoveType,
+    rng: Random,
+    exportData: Boolean): World[Individual] = {
     var initWorld: World[Individual] = null
     var geopkg: GeoPackage = null
     val geometryFactory = new GeometryFactory
@@ -117,7 +116,7 @@ object SimulationWithBeforeAndAfterMaps {
         case Some((day, slice)) =>
           if (day == days-1 && slice == 2) {
             // the last simulation
-            if (export) {
+            if (exportData) {
               createEntry("Final", world, None)
               createEntry("Diff", initWorld, Some(world))
               log("close geopackage")
@@ -132,7 +131,7 @@ object SimulationWithBeforeAndAfterMaps {
         case None =>
           // the first simulation
           initWorld = world
-          if (export) {
+          if (exportData) {
             // initialize the geopackage
             val params = new java.util.HashMap[String, Object]()
             params.put("dbtype", "geopkg")
@@ -156,7 +155,6 @@ object SimulationWithBeforeAndAfterMaps {
       constraintsStrength = constraintsStrength,
       inertiaCoefficient = inertiaCoefficient,
       healthyDietReward = healthyDietReward,
-      interpersonalInfluence = interpersonalInfluence,
       days = days,
       population = population,
       moves = moves,
@@ -177,7 +175,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
     output: Option[File] = None,
     seed: Option[Long] = None,
     scenario: Option[Int] = None,
-    export: Boolean = true)
+    exportData: Boolean = true)
 
   val builder = OParser.builder[Config]
   val parser = {
@@ -212,7 +210,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
         .action((x, c) => c.copy(seed = Some(x)))
         .text("seed for the random number generator"),
       opt[Boolean]('e', "export")
-        .action((x, c) => c.copy(export = x))
+        .action((x, c) => c.copy(exportData = x))
         .text("export the results rather than produce the maps")
     )
   }
@@ -253,7 +251,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           case ObservedPop => "ObservedPop"
         }
         println(s"popName = $popName")
-        val output = if (config.export) {
+        val output = if (config.exportData) {
           val outputFile = config.output.get.toScala / s"results_${parameterName}_Scenario${scenario}_${popName}_${moveTypeString}_$seed.gpkg"
           outputFile.parent.createDirectories()
           outputFile
@@ -272,7 +270,6 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           constraintsStrength = constraintsStrength,
           inertiaCoefficient = inertiaCoefficient,
           healthyDietReward = healthyDietReward,
-          interpersonalInfluence = interpersonalInfluence,
           days = 6,
           population = worldFeatures,
           moves = moves,
@@ -280,7 +277,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           output.toJava,
           moveType,
           rng = rng,
-          config.export
+          config.exportData
         )
       }
       val parameterName = "valentine2021"
