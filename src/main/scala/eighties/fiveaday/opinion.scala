@@ -40,8 +40,10 @@ object opinion {
 
       def dietRewardOpinion(individual: Individual) = {
         def opinion = Individual.opinion.get(individual)
-        def getReward(o: Opinion): Opinion =  healthyDietReward.toFloat * o
-        if(Individual.behaviourV.get(individual) == Healthy) getReward(opinion) else 0.0f
+//        def getReward(o: Opinion): Opinion =  healthyDietReward.toFloat * o
+//        if(Individual.behaviourV.get(individual) == Healthy) getReward(opinion) else 0.0f
+        def getReward(o: Opinion): Opinion = math.min(1.0f,(1.0f + healthyDietReward.toFloat) * o)
+        if(Individual.behaviourV.get(individual) == Healthy) getReward(opinion) else opinion
       }
 
       def updateBehaviour(individual: Individual): Individual = {
@@ -75,12 +77,14 @@ object opinion {
       // Nb: Clémentine trouve ça clair ! => C'est confirmé
       def updateIndividual(averageOpinion: Double)(individual: Individual) = {
         def newOpinion =
-          math.min(
-            1.0,
-            dietRewardOpinion(individual) +
-              (inertiaCoefficient * Individual.opinion.get(individual).toDouble +
-                (1 - inertiaCoefficient) * averageOpinion)
-          )
+//          math.min(
+//            1.0,
+//            dietRewardOpinion(individual) +
+//              (inertiaCoefficient * Individual.opinion.get(individual).toDouble +
+//                (1 - inertiaCoefficient) * averageOpinion)
+//          )
+          inertiaCoefficient * dietRewardOpinion(individual) +
+              (1 - inertiaCoefficient) * averageOpinion
         Individual.opinion.set(newOpinion.toFloat)(individual)
       }
 

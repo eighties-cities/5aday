@@ -40,6 +40,7 @@ object Statistics extends App {
     moves: Option[File] = None,
     distribution: Option[File] = None,
     seed: Option[Long] = None,
+    scenario: Option[String] = Some("valentine2021"),
     output: Option[File] = None,
     replications: Int = 100)
 
@@ -65,6 +66,10 @@ object Statistics extends App {
         .optional()
         .action((x, c) => c.copy(seed = Some(x)))
         .text("seed for the random number generator"),
+      opt[String]('c', "scenario")
+        .optional()
+        .action((x, c) => c.copy(scenario = Some(x)))
+        .text("scenario"),
       opt[File]('o', "output")
         .required()
         .action((x, c)=> c.copy(output = Some(x)))
@@ -103,7 +108,7 @@ object Statistics extends App {
         ("leftMay",(0.52513839, 0.189485955, 0.877346626, 0.754637737, 0.007118287))
       )
 
-      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap("valentine2021")
+      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap(config.scenario.get)
 
       val days = 6
 
