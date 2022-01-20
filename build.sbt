@@ -5,7 +5,7 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "3.1.0"
+scalaVersion := "2.13.8"
 
 crossScalaVersions := Seq("3.1.0")
 
