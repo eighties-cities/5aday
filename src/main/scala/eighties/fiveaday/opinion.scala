@@ -45,31 +45,25 @@ object opinion {
       }
 
       def updateBehaviour(individual: Individual): Individual = {
+        def budgetConstraint = booleanToDouble(Individual.budget.get(individual))
+        def habitConstraint = booleanToDouble(Individual.budget.get(individual))
 
-        def probaSwitchToUnhealthy = {
-          val y =
-            maxProbaToSwitch +
-              booleanToDouble(Individual.budget.get(individual)) * constraintsStrength -
-              booleanToDouble(Individual.habit.get(individual)) * constraintsStrength
+        val probaToSwitch =
+          Individual.behaviourV.get(individual) match
+            case Healthy =>
+              val maxY = maxProbaToSwitch - (budgetConstraint * -1.0 * constraintsStrength) - (habitConstraint * -1 * constraintsStrength)
+              math.max(0, maxY * (-2 * Individual.opinion.get(individual)) + 1)
+            case Unhealthy =>
+              val maxY = maxProbaToSwitch - (budgetConstraint * constraintsStrength) - (habitConstraint * constraintsStrength)
+              math.max(0, maxY * (2 * Individual.opinion.get(individual)) - 1)
 
-          val d = math.max(0.0, -2.0 * Individual.opinion.get(individual) + 1.0)
-          math.max(0.0, y * d)
-        }
 
-        def probaSwitchToHealthy = {
-          val y =
-            maxProbaToSwitch -
-              booleanToDouble(Individual.budget.get(individual)) * constraintsStrength -
-              booleanToDouble(Individual.habit.get(individual)) * constraintsStrength
-
-          val d = math.max(0.0, 2.0 * Individual.opinion.get(individual) - 1.0)
-          math.max(0.0, y * d)
-        }
-
-        Individual.behaviourV.modify {
-          case Healthy => if (random.nextDouble() < probaSwitchToUnhealthy) Unhealthy else Healthy
-          case Unhealthy => if (random.nextDouble() < probaSwitchToHealthy) Healthy else Unhealthy
-        }(individual)
+        if (random.nextDouble() < probaToSwitch)
+          Individual.behaviourV.modify {
+            case Healthy => Unhealthy
+            case Unhealthy => Healthy
+          }(individual)
+        else individual
       }
 
       // Nb: Clémentine trouve ça clair ! => C'est confirmé
@@ -87,7 +81,7 @@ object opinion {
       def newCell =
         if(cell.nonEmpty) {
           val averageOpinion = cell.map(Individual.opinion.get).sum.toDouble / cell.size
-          cell.map { updateIndividual(averageOpinion) _ andThen updateBehaviour }
+          cell.map { updateIndividual(averageOpinion) andThen updateBehaviour }
         } else cell
 
       newCell
