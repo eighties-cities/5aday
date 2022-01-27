@@ -208,8 +208,7 @@ object Fit {
   }
 }
 
-object SimulationApp extends App {
-
+@main def SimulationApp(args: String*) = {
 
   case class Config(
     population: Option[File] = None,
