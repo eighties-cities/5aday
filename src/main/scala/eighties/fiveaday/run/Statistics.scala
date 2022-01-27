@@ -40,6 +40,7 @@ object Statistics extends App {
     moves: Option[File] = None,
     distribution: Option[File] = None,
     seed: Option[Long] = None,
+    scenario: Option[String] = Some("valentine2021"),
     output: Option[File] = None,
     replications: Int = 100)
 
@@ -65,6 +66,10 @@ object Statistics extends App {
         .optional()
         .action((x, c) => c.copy(seed = Some(x)))
         .text("seed for the random number generator"),
+      opt[String]('c', "scenario")
+        .optional()
+        .action((x, c) => c.copy(scenario = Some(x)))
+        .text("scenario"),
       opt[File]('o', "output")
         .required()
         .action((x, c)=> c.copy(output = Some(x)))
@@ -100,10 +105,11 @@ object Statistics extends App {
         ("hope2020", (0.02571037, 0.00878027, 0.55859533, 0.72271431, 0.6156984)),
         ("valentine2021",(1.0, 0.209712299284924, 0.80338439724895, 0.190788311771708, 0.0166381262141282)),
         ("rightMay",(0.55351044, 1.0, 0.68560676, 0.37244175, 0.0)),
-        ("leftMay",(0.52513839, 0.189485955, 0.877346626, 0.754637737, 0.007118287))
+        ("leftMay",(0.52513839, 0.189485955, 0.877346626, 0.754637737, 0.007118287)),
+        ("jan2022",(0.4, 0.7, 0.4, 0.6, 0.0))
       )
 
-      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap("valentine2021")
+      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap(config.scenario.get)
 
       val days = 6
 
