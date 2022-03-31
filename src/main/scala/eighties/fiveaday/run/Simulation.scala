@@ -208,8 +208,7 @@ object Fit {
   }
 }
 
-object SimulationApp extends App {
-
+@main def SimulationApp(args: String*) = {
 
   case class Config(
     population: Option[File] = None,
@@ -252,14 +251,9 @@ object SimulationApp extends App {
 
       val distributionConstraints = config.distribution.get
 
-      val parameterSets =
-        Vector(
-          (0.8507843893208267, 0.45377746673575825, 0.6585498777924014, 0.210784861364803, 0.2589547233574915),
-          (0.8391008302839391, 0.4281592636895263, 0.6548785686047478, 0.2147412463304806, 0.4204431246470749),
-          (0.010216504, 0.0, 0.806896825, 0.767755389, 0.790965130)
-        )
-
-      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterSets(2)
+      val parameterMap = util.getParameterMap
+      // FIXME Add named parameter set parameter? 
+      val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap("summer2020")
 
       val world =
         Simulation.run(
