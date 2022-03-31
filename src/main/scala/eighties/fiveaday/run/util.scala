@@ -2,13 +2,27 @@ package eighties.fiveaday.run
 
 import better.files.Dsl.SymbolicOperations
 import better.files.File
+import com.github.tototoshi.csv.{CSVReader, defaultCSVFormat}
 import eighties.fiveaday.population.Individual
 import eighties.fiveaday.{observable, worldMapper}
 import eighties.h24.space.{BoundingBox, World}
 
 import scala.collection.immutable.Seq
+import scala.io.Source
 
 object util {
+  def getParameterMap = {
+    val reader = CSVReader.open(Source.fromResource("parameters.csv"))(defaultCSVFormat)
+
+    def toTuple(map: Map[String, String]) = (
+      map("maxProbaToSwitch").toDouble,
+      map("constraintsStrength").toDouble,
+      map("inertiaCoefficient").toDouble,
+      map("healthyDietReward").toDouble,
+      map("interpersonalInfluence").toDouble)
+
+    reader.allWithHeaders().map { map => map("Name") -> toTuple(map) }.toMap
+  }
   def mapHealth(world: World[Individual], obb: BoundingBox, width: Int, height: Int, file: File, textLeft: String, textRight: String, atHome: Boolean = true, maxValue: Double = 1.0, fraction: Int = 4, rescale: Boolean = true): Unit = {
     def getValue(individual: Individual) = if (individual.healthy) 1.0 else 0.0
     worldMapper.mapGray(world, obb, width, height, file, getValue, atHome, textLeft, textRight, maxValue = maxValue, fraction = fraction, rescale = rescale)
