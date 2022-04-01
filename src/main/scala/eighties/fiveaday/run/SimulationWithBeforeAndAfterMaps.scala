@@ -165,8 +165,8 @@ object SimulationWithBeforeAndAfterMaps {
     )
   }
 }
-object SimulationWithBeforeAndAfterMapsApp extends App {
 
+@main def SimulationWithBeforeAndAfterMapsApp(args: String*): Unit = {
   case class Config(
     population: Option[File] = None,
     randomPopulation: Option[File] = None,
