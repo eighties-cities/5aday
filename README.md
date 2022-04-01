@@ -24,5 +24,5 @@ sbt -J-Xmx4G "runMain eighties.fiveaday.run.SimulationWithMapApp -d ./data/initi
 ## Run statistics
 
 ```shell script
-sbt -J-Xmx4G "runMain eighties.fiveaday.run.Statistics -d ./data/initialisation_distribution_per_cat_2002_2008.csv -p ../h24/results_IDF/population.bin -m ../h24/results_IDF/moves.bin -c HigherProp -r 10 -o /tmp/statistics/HigherProp" 
+sbt -J-Xmx4G "runMain eighties.fiveaday.run.StatisticsApp -d ./data/initialisation_distribution_per_cat_2002_2008.csv -p ../h24/results_IDF/population.bin -m ../h24/results_IDF/moves.bin -c HigherProp -r 10 -o /tmp/statistics/HigherProp" 
 ```

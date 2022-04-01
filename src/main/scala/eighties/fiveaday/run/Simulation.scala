@@ -161,8 +161,8 @@ object Simulation {
       } {
         def newIndividual =
           dynamic.sampleDestinationInMoveMatrix(workTimeMovesFromCell, individual, socialCategory, rng) match {
-            case Some(d) => dayDestination.set(d)(individual)
-            case None => dayDestination.set(home(individual))(individual)
+            case Some(d) => dayDestination.replace(d)(individual)
+            case None => dayDestination.replace(home(individual))(individual)
           }
         newIndividuals(index) = newIndividual
         index += 1
@@ -208,7 +208,7 @@ object Fit {
   }
 }
 
-@main def SimulationApp(args: String*) = {
+@main def SimulationApp(args: String*): Unit = {
 
   case class Config(
     population: Option[File] = None,
@@ -252,7 +252,7 @@ object Fit {
       val distributionConstraints = config.distribution.get
 
       val parameterMap = util.getParameterMap
-      // FIXME Add named parameter set parameter? 
+      // FIXME Add named parameter set parameter?
       val (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, interpersonalInfluence) = parameterMap("summer2020")
 
       val world =

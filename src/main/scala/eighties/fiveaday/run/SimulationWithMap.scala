@@ -105,7 +105,7 @@ sealed trait PopType
 case object RandomPop extends PopType
 case object ObservedPop extends PopType
 
-object SimulationWithMapApp extends App {
+@main def SimulationWithMapApp(args: String*): Unit = {
   case class Config(
     population: Option[File] = None,
     randomPopulation: Option[File] = None,
