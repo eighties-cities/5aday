@@ -33,7 +33,7 @@ import scala.util.Random
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
 
-object InitStatistics extends App {
+@main def InitStatistics(args: String*): Unit = {
 
   case class Config(
     population: Option[File] = None,
