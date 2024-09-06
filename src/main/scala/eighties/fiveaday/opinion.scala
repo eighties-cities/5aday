@@ -122,9 +122,8 @@ object opinion {
           newIndividuals(index) = individual
           index += 1
         }
-    }
-
-    Focus[World[Individual]](_.individuals).set(newIndividuals)(world)
+      }
+      Focus[World[Individual]](_.individuals).set(newIndividuals)(world)
   }
 }
 
