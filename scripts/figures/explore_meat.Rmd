@@ -1,0 +1,46 @@
+---
+title: "Exploring Meat toy model"
+output: html_notebook
+---
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+library(readr)
+library(reshape2)
+library(tidyr)
+library(magrittr)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(magrittr)
+
+
+base <- "/home/reyman/TRASH/5ad/mai2021/valentine/"
+
+```
+
+ 
+```{r}
+
+specialRead <- function(x) {
+  read_csv(file=x, col_names = TRUE, col_types= "nnnnnnnnnn")
+} 
+
+concatFiles <- function (base, folder){
+   fullPath = paste(base,folder,sep="")
+   list.files(path = fullPath, full.names = TRUE, pattern = "(\\d_\\d_\\d)") %>% lapply(specialRead) %>% bind_rows
+}
+
+sortie_sc1 <- concatFiles(base,"5aday_20")
+
+sortie_sc1$propHealthy <- sortie_sc1$healthy / sortie_sc1$effective 
+  
+sortieLong_sc1 <- gather(sortie_sc1, facteur, valeur, c(propHealthy,avgOpinion) ) 
+
+sortieLong_sc1 <- mutate(sortieLong_sc1, "ds" = gsub(" ", "", paste(paste("[",paste(sortieLong_sc1$day, sortieLong_sc1$slice)),"]")))
+
+p <- ggplot(data=sortieLong_sc1, aes(x=ds, y=valeur, group=educ, fill=educ, colour=as.character(educ)))
+p <- p + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p <- p + geom_line(size=0.5) + facet_grid(facteur ~ sex ~ age, labeller = label_both) #show.legend = FALSE
+p
+ggsave("valentine_20rep.pdf", device = cairo_pdf, width=297, height = 210,units = "mm")
+
+```
