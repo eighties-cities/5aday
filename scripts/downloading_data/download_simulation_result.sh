@@ -13,4 +13,6 @@ curl --cookie cookie.txt ${DOWNLOAD_FILES_URL} --output HigherProp.zip
 
 unzip HigherProp.zip
 
-# clef UgRS8QIaWT18o4nUDrIvG0oOVrugRO1WzATH5WEGRNVZCt6BB2bzyEyIm3eZ
+rm info.json
+rm cookie.txt
+rm info2.json
