@@ -48,7 +48,7 @@ recode <- function(x) {
 
 ### Higher Prop
 
-```{r, fig.width=20}
+```{r, fig.width=10,fig.height=10, fig.fullwidth=TRUE, out.width='100%'}
 base <- "../downloading_data"
 
 sortie_sc5_higherprop <- concatFiles(base,"/HigherProp_mars2022")
@@ -69,24 +69,22 @@ names(sex.l) <- c("1", "2")
 p1 <- ggplot(data=sortieLong_sc5_hp %>% filter(facteur=="propHealthy"), aes(x=ds, y=valeur, group=educ, fill=educ, colour=as.character(educ)))
 p1 <- p1 + scale_color_discrete(
     name = "Education level",
-    labels = c("poor", "middle", "up")
+    labels = c("poor", "middle", "up") 
   ) 
-p1 <- p1 + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+p1 <- p1 + theme_bw() + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 p1 <- p1 + labs(title="Proportion of Healthy by age, sex and education level", y = "Value", x = "Time Slice") 
 p1 <- p1 + geom_line(size=0.5) + facet_grid( sex ~ age, labeller = labeller(sex = sex.l, age = age.l), scales = "fixed") #show.legend = FALSE
-p1 <- p1 + coord_cartesian( ylim = c(0, 0.3))
-p1
+p1 <- p1 + coord_cartesian( ylim = c(0, 0.3))  
 
 p2 <- ggplot(data=sortieLong_sc5_hp %>% filter(facteur=="avgOpinion"), aes(x=ds, y=valeur, group=educ, fill=educ, colour=as.character(educ)))
 p2 <- p2 + scale_color_discrete(
     name = "Education level",
     labels = c("poor", "middle", "up")
   ) 
-p2 <- p2 + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+p2 <- p2 + theme_bw() + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 p2 <- p2 + labs(title="Average Opinion by age, sex and education level", color = "Education level", y = "Value", x = "Time Slice") 
 p2 <- p2 + geom_line(size=0.5) + facet_grid(sex ~ age, labeller = labeller(sex = sex.l, age = age.l), scales = "fixed") #show.legend = FALSE
-p2 <- p2 + coord_cartesian( ylim = c(0.3, 0.7))
-p2
+p2 <- p2 + coord_cartesian( ylim = c(0.3, 0.7)) 
 
 plot_grid(
   p1, p2,
@@ -95,129 +93,61 @@ plot_grid(
 ggsave("propHealtyAndOpinion_higherprop.pdf")
 ```
 
-<!-- ## Other observable  -->
+ ```{r} 
 
-<!-- ### Prepare data -->
+ hp_sc5_health <- read_csv(paste0(base,"/HigherProp_mars2022/health.csv")) 
+ hp_sc5_health$propHealthy <- hp_sc5_health$healthy / hp_sc5_health$effective  
 
-<!-- ```{r, fig.width=20} -->
-<!-- base <- "/home/reyman/Data/5ad/mars2022" -->
+ hpLong_sc5_health <- hp_sc5_health %>% 
+   gather(key=facteur, value=valeur, propHealthy,avgOpinion,socialInequality,e ) %>% 
+   mutate(ds= recode(paste0(day, slice))) 
 
+ hpLong_sc5_health <-  hpLong_sc5_health %>% mutate (type="hp") 
 
+ both_sc5_health <- hpLong_sc5_health %>% mutate(type = as.factor(type)) 
+ ``` 
 
-<!-- hp_sc5_health <- read_csv(paste0(base,"/statistics/HigherProp/health.csv")) -->
-<!-- hp_sc5_health$propHealthy <- hp_sc5_health$healthy / hp_sc5_health$effective  -->
+ ### Higher Prop 
 
-<!-- hpLong_sc5_health <- hp_sc5_health %>% -->
-<!--   gather(key=facteur, value=valeur, propHealthy,avgOpinion,socialInequality,e ) %>% -->
-<!--   mutate(ds= recode(paste0(day, slice))) -->
+ ```{r, fig.width = 20, fig.height = 10, fig.fullwidth = TRUE, out.width='100%'} 
 
-<!-- sp_sc5_health <- read_csv(paste0(base,"/statistics/SmallerProp/health.csv")) -->
-<!-- sp_sc5_health$propHealthy <- sp_sc5_health$healthy / sp_sc5_health$effective  -->
+ p_hp_propHealthy <- both_sc5_health %>% filter(facteur=="propHealthy")  %>% ggplot( aes(x=ds, y=valeur,colour=type) )+ 
+   theme_bw()+ 
+   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + 
+   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + 
+   geom_point() +
+   labs(y= "Value", x = "prop. of Healthy") 
 
-<!-- spLong_sc5_health <- sp_sc5_health %>% -->
-<!--   gather(key=facteur, value=valeur, propHealthy,avgOpinion,socialInequality,e ) %>% -->
-<!--   mutate(ds= recode(paste0(day, slice))) -->
+ #p_hp_propHealthy 
+ #ggsave("p_hp_propHealthy.pdf") 
 
-<!-- hpLong_sc5_health <-  hpLong_sc5_health %>% mutate (type="hp") -->
-<!-- spLong_sc5_health <- spLong_sc5_health %>% mutate (type="sp") -->
+ p_hp_ineq <- both_sc5_health %>% filter(facteur=="socialInequality")  %>% ggplot( aes(x=ds, y=valeur,colour=type)) + 
+   theme_bw()+ 
+   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + 
+   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + 
+   geom_point() + 
+   labs(y= "Value", x = "Social Inequality") 
 
-
-<!-- both_sc5_health <- rbind(hpLong_sc5_health, spLong_sc5_health) %>% mutate(type = as.factor(type)) -->
-<!-- ``` -->
-
-<!-- ### Higher Prop -->
-
-<!-- Multiple graphics using cowplots  -->
-
-<!-- ```{r, fig.width=70} -->
-
-<!-- p_hp_propHealthy <- both_sc5_health %>% filter(facteur=="propHealthy")  %>% ggplot( aes(x=ds, y=valeur,colour=type) )+ -->
-<!--   theme_bw()+ -->
-<!--   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + -->
-<!--   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + -->
-<!--   geom_point()   + -->
-<!--   labs(y= "Value", x = "prop. of Healthy") -->
-
-<!-- p_hp_propHealthy -->
-<!-- #ggsave("p_hp_propHealthy.pdf") -->
-
-<!-- p_hp_ineq <- both_sc5_health %>% filter(facteur=="socialInequality")  %>% ggplot( aes(x=ds, y=valeur,colour=type)) + -->
-<!--   theme_bw()+ -->
-<!--   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + -->
-<!--   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + -->
-<!--   geom_point()   + -->
-<!--   labs(y= "Value", x = "Social Inequality") -->
-
-<!-- p_hp_ineq -->
-<!-- #ggsave("p_hp_ineq.pdf") -->
+ #p_hp_ineq 
+ #ggsave("p_hp_ineq.pdf") 
 
 
-<!-- p_hp_e <- both_sc5_health %>% filter(facteur=="e")  %>% ggplot( aes(x=ds, y=valeur,colour=type)) + -->
-<!--   theme_bw()+ -->
-<!--   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + -->
-<!--   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + -->
-<!--   geom_point()   + -->
-<!--   labs(y= "Value", x = "Guido") -->
+ p_hp_e <- both_sc5_health %>% filter(facteur=="e")  %>% ggplot( aes(x=ds, y=valeur,colour=type)) + 
+   theme_bw()+ 
+   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + 
+   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + 
+   geom_point() +
+   labs(y= "Value", x = "Guido") 
 
-<!-- p_hp_e -->
-<!-- #ggsave("p_hp_e.pdf") -->
+ #p_hp_e 
+ #ggsave("p_hp_e.pdf") 
 
-<!-- c <- plot_grid(p_hp_propHealthy, p_hp_ineq,p_hp_e, labels = "AUTO",nrow=1, align="h") -->
-<!-- ggsave("c.pdf",c, width=20) -->
-<!-- ``` -->
+ p_hp_all <- plot_grid(p_hp_propHealthy, p_hp_ineq, p_hp_e, labels = "AUTO",nrow=1, align="h") 
+ p_hp_all
+ ggsave("p_hp_all.pdf",p_hp_all, width=20) 
+ ``` 
 
-<!-- ```{r, fig.width=20} -->
-<!-- base <- "/home/reyman/TRASH/5ad/mars2022" -->
 
-<!-- sortie_sc5_smallerProp <- concatFiles(base,"/statistics/SmallerProp") -->
-<!-- sortie_sc5_smallerProp$propHealthy <- sortie_sc5_smallerProp$healthy / sortie_sc5_smallerProp$effective  -->
-
-<!-- sortieLong_sc5_sp <- gather(sortie_sc5_smallerProp, facteur, valeur,c(propHealthy,avgOpinion) )  -->
-<!-- sortieLong_sc5_sp <- mutate(sortieLong_sc5_sp, "ds" = gsub(" ", "", paste(paste("[",paste(sortieLong_sc5_sp$day, sortieLong_sc5_sp$slice)),"]"))) -->
-
-<!-- p <- ggplot(data=sortieLong_sc5_sp, aes(x=ds, y=valeur, group=educ, fill=educ, colour=as.character(educ))) -->
-<!-- p <- p + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) -->
-<!-- p <- p + geom_line(size=0.5) + facet_grid(facteur ~ sex ~ age, labeller = label_both,scales = "free_y") #show.legend = FALSE -->
-<!-- p -->
-<!-- ggsave("sc_smallerprop.pdf") -->
-
-<!-- ``` -->
-
-<!-- ```{r echo=TRUE} -->
-
-<!-- sim <- read.csv2("results-25042022-10000replications.csv", sep=",", dec=".") -->
-<!-- sim$Scenario <- ifelse(sim$numOfScenario == 1, "1A: Random residence / no move", -->
-<!--                        ifelse(sim$numOfScenario == 2, "1B: Random residence / random moves", -->
-<!--                               ifelse(sim$numOfScenario == 3, "2A: Observed residence / no move", -->
-<!--                                      ifelse(sim$numOfScenario == 4, "2B: Observed residence / random moves", -->
-<!--                                             "2C: Observed residence / observed moves")))) -->
-
-<!-- # mean_1A <- mean(sim[sim$numOfScenario == 1,"socialInequality"]) -->
-<!-- # mean_1B <- mean(sim[sim$numOfScenario == 2,"socialInequality"]) -->
-<!-- # mean_2A <- mean(sim[sim$numOfScenario == 3,"socialInequality"]) -->
-<!-- # mean_2B <- mean(sim[sim$numOfScenario == 4,"socialInequality"]) -->
-<!-- # mean_2C <- mean(sim[sim$numOfScenario == 5,"socialInequality"]) -->
-
-<!-- sim %>% -->
-<!--   ggplot( aes(x=socialInequality, group=Scenario, fill=Scenario)) + -->
-<!--   geom_density(alpha=0.6) + -->
-<!--   scale_fill_manual(values=c("firebrick2", "mediumorchid4", "dodgerblue2", "darkorange2", "springgreen3"))+ -->
-<!--   theme_bw() + -->
-<!--   # geom_vline(xintercept=mean_1A, size=0.4, color="firebrick2") +  -->
-<!--   # geom_vline(xintercept=mean_1B, size=0.4, color="mediumorchid4") + -->
-<!--   # geom_vline(xintercept=mean_2A, size=0.4, color="dodgerblue2") + -->
-<!--   # geom_vline(xintercept=mean_2B, size=0.4, color="darkorange2") + -->
-<!--   # geom_vline(xintercept=mean_2C, size=0.4, color="springgreen3") + -->
-<!--   # annotate("text", x=mean_1A + 0.004, y= -10, size=2.5, label=round(mean_1A,3), color="firebrick2") + -->
-<!--   # annotate("text", x=mean_1B + 0.004 , y= -10, size=2.5, label=round(mean_1B,3), color="mediumorchid4") + -->
-<!--   # annotate("text", x=mean_2A + 0.004 , y= -10, size=2.5, label=round(mean_2A,3), color="dodgerblue2") + -->
-<!--   # annotate("text", x=mean_2B + 0.004 , y= -10, size=2.5, label=round(mean_2B,3), color="darkorange2") + -->
-<!--   # annotate("text", x=mean_2C + 0.004, y= -10, size=2, label=round(mean_2C,3), color="springgreen3") + -->
-<!--    xlab("Social Inequality Index") + -->
-<!--   ylab("Density of simulations") +  -->
-<!--   guides(fill=guide_legend(title="Type of scenario")) #+  -->
-
-<!-- ``` -->
 
 
 
