@@ -1,0 +1,10 @@
+version: "3"
+services:
+    openmole:
+      image: openmole/openmole:17.1
+      hostname: openmole
+      volumes:
+        - ./data/openmole:/var/openmole/
+      ports:
+        - "55555:8080"
+      privileged: true
