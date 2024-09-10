@@ -12,14 +12,15 @@ RUN chmod 644 /etc/apt/trusted.gpg.d/scalasbt-release.gpg
 RUN apt-get update && apt-get install --no-install-recommends -y gnupg libgnutls30 ntp apt-transport-https ca-certificates git git-lfs curl sbt python3 python3-pycurl bash tar gzip ca-certificates-java openssh-client tree unzip p7zip-full gdal-bin gosu
 RUN update-ca-certificates
 
+COPY ./docker-entrypoint.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 ARG GID
 ARG UID
 
 RUN addgroup --gid $GID h24 && useradd -m -d /home/h24 -s /bin/sh -g h24 -u $UID h24 
+USER h24
 
-
-COPY ./docker-entrypoint.sh /usr/local/bin
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 WORKDIR /home/h24
 
