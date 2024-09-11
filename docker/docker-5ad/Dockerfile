@@ -12,23 +12,17 @@ RUN chmod 644 /etc/apt/trusted.gpg.d/scalasbt-release.gpg
 RUN apt-get update && apt-get install --no-install-recommends -y gnupg libgnutls30 ntp apt-transport-https ca-certificates git git-lfs curl sbt python3 python3-pycurl bash tar gzip ca-certificates-java openssh-client tree unzip p7zip-full gdal-bin gosu
 RUN update-ca-certificates
 
-COPY ./docker-entrypoint.sh /usr/local/bin
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
 ARG GID
 ARG UID
 
-RUN addgroup --gid $GID 5ad && useradd -m -d /home/5ad -s /bin/sh -g 5ad -u $UID 5ad 
+RUN addgroup --gid $GID 5ad --force-badname && useradd -m -d /home/5ad -s /bin/sh -g 5ad -u $UID 5ad
 USER 5ad
-
 
 WORKDIR /home/5ad
 
-RUN git clone https://github.com/eighties-cities/5ad.git source
+RUN git clone https://github.com/eighties-cities/5aday.git source
 
 WORKDIR /home/5ad/source
 
-RUN ./getData.sh
-
 ENTRYPOINT ["sbt"]
-CMD ["sleep", "infinity"]
+#CMD ["sleep", "infinity"]
