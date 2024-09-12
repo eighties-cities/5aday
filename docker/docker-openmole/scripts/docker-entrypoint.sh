@@ -1,8 +1,8 @@
 #!/bin/bash
-set -e 
+set -e
 
 if [ "$(whoami)" == "root" ]; then
-    chown -R h24:h24 /home/h24/workspace
+    chown -R mole:mole /home/mole/workspace
     exec gosu mole "$@"
 fi
 

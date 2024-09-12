@@ -15,18 +15,14 @@ RUN update-ca-certificates
 ARG GID
 ARG UID
 
-RUN addgroup --gid $GID h24 && useradd -m -d /home/h24 -s /bin/sh -g h24 -u $UID h24 
+RUN addgroup --gid $GID 5ad --force-badname && useradd -m -d /home/5ad -s /bin/sh -g 5ad -u $UID 5ad
+USER 5ad
 
+WORKDIR /home/5ad
 
-COPY ./docker-entrypoint.sh /usr/local/bin
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN git clone https://github.com/eighties-cities/5aday.git source
 
-WORKDIR /home/h24
-
-RUN git clone https://github.com/eighties-cities/h24.git source
-
-WORKDIR /home/h24/source
-
-RUN ./getData.sh
+WORKDIR /home/5ad/source
 
 ENTRYPOINT ["sbt"]
+#CMD ["sleep", "infinity"]
