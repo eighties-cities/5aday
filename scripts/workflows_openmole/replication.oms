@@ -1,0 +1,118 @@
+val maxProbaToSwitch = Val[Double]
+val constraintsStrength = Val[Double]
+val inertiaCoefficient = Val[Double]
+val healthyDietReward = Val[Double]
+val interpersonalInfluence = Val[Double]
+
+val simulatedDays = Val[Int]
+val dateEnd = Val[Int]
+val obsPop = Val[File]
+val randomPop = Val[File]
+val initMoves = Val[File]
+val distributionConstraints = Val[File]
+val seed = Val[Long]
+
+val socialInequality = Val[Double]
+val erreygersE = Val[Double]
+val numberOfHealthy = Val[Int]
+val numOfScenario = Val[Int]
+
+def HigherProp = Array(0.890470449, 0.12894399, 0.819531377, 0.153103026)
+//def leftMay = Array(0.52513839, 0.189485955, 0.877346626, 0.754637737,0.007118287)
+
+val param = HigherProp
+
+val fiveAD = ScalaTask("""
+
+  import eighties.h24.simulation._
+  import eighties.fiveaday.observable
+  import eighties.fiveaday.run._
+
+  val rng = newRNG(seed)
+  
+  case class Scenario(pop: File, move: MoveType)
+
+  val scenarii:Map[Int,Scenario] = Map(
+    1 -> Scenario(randomPop, MoveType.No),
+    2 ->  Scenario(randomPop, MoveType.Random),
+    3 ->  Scenario(obsPop, MoveType.No),
+    4 ->  Scenario(obsPop, MoveType.Random),
+    5 ->  Scenario(obsPop, MoveType.Data))
+  
+  val lastWorld = Simulation.run(
+    maxProbaToSwitch = maxProbaToSwitch,
+    constraintsStrength = constraintsStrength,
+    inertiaCoefficient = inertiaCoefficient,
+    healthyDietReward = healthyDietReward,
+    days = 6,
+    population = scenarii(numOfScenario).pop,
+    moves = initMoves,
+    distributionConstraints = distributionConstraints,
+    moveType = scenarii(numOfScenario).move,
+    rng = rng)
+    
+  val socialInequality =
+observable.weightedInequalityRatioBySexAge(lastWorld)
+  val erreygersE = observable.erreygersE(lastWorld)
+  val numberOfHealthy = observable.numberOfHealthy(lastWorld)
+ 
+""") set (
+    inputs += (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward, seed),
+    inputs += (numOfScenario,distributionConstraints,obsPop,randomPop,initMoves),
+    
+    outputs += (maxProbaToSwitch, constraintsStrength, inertiaCoefficient, healthyDietReward ),
+    outputs += (socialInequality, erreygersE, numberOfHealthy),
+    
+    distributionConstraints := workDirectory / "data" /
+"initialisation_distribution_per_cat_2002_2008.csv",
+    obsPop :=  workDirectory / "data" / "population.bin",
+    randomPop := workDirectory / "data" / "random_population.bin",
+    initMoves := workDirectory / "data" / "moves.bin",
+    maxProbaToSwitch := param(0),
+    constraintsStrength := param(1),
+    inertiaCoefficient := param(2),
+    healthyDietReward := param(3),
+    //seed := 42,
+    //numOfScenario := 5,
+    plugins += pluginsOf(eighties.fiveaday.run.Fit)
+)
+
+ val clusterEnv =
+  SLURMEnvironment(
+    "sreyco01",
+    "myria.criann.fr",
+    partition = "2tcourt",
+    workDirectory = "/tmp",
+    nTasks = 1,
+    memory = 8 gigabytes,
+    openMOLEMemory = 4 gigabytes,
+    time = 8 hours 
+  )
+
+val gelox_cpu = 3
+val envssh = SSHEnvironment(
+    "molles-gelox3", 
+    "gelox.univ-rouen.fr", 
+    gelox_cpu,
+    openMOLEMemory = 4 gigabytes,
+    workDirectory = "/home/molles-gelox3"
+)
+
+val dispatch =
+  DispatchEnvironment(
+    slot = Seq(
+      700 on clusterEnv 
+    )
+  )
+  
+val exploration = DirectSampling(
+  evaluation =
+    Replication(
+        evaluation = fiveAD, 
+        seed = seed,
+        sample = 10000,
+      ),
+  sampling = (numOfScenario in List(1,2,3,4,5)) 
+) 
+
+exploration on dispatch hook (workDirectory / "results_debug/results_10000.csv") by 5

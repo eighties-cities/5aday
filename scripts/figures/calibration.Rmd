@@ -1,0 +1,34 @@
+---
+title: "Calibrage"
+output: html_document
+---
+
+---
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+library(readr)
+library(reshape2)
+library(tidyr)
+library(magrittr)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(magrittr)
+
+
+base <- "/home/reyman/Projets/h24_iscpif/data/THEOQUANT2019/"
+
+```
+
+```{r}
+data <- read_csv(paste(base,"population232782.csv",sep = ""),col_names = TRUE)  %>% filter(samples >= 10.0)
+
+data <- data %>% mutate(category=cut(samples, breaks=c(-Inf,30.0, 70.0, 100.0), labels = c("low < 30 ","medium >30 & < 70 ", "high >= 70")))
+
+p <- ggplot(data=data, aes(x=deltaHealth, y=deltaSocialInequality))
+p <- p + geom_point(size=1,  aes(colour=as.character(category))) +
+        labs(x=" Δ Health (2002, 2008)", y=" Δ SocialInequality (2002, 2008) ", colour = "nb samples")
+p + theme_classic() 
+p
+ggsave("population232782.png",dpi=300)
+```
+

@@ -1,0 +1,153 @@
+---
+title: "5ad"
+output: html_document
+---
+
+## Cinetic graphics during simulation
+
+```{r, echo=TRUE}
+library(cowplot)
+library(tidyverse)
+library(here)
+```
+
+```{r, echo=TRUE}
+specialRead <- function(x) {
+  read_csv(file=x, col_names = TRUE, col_types= "nnnnnnnnnn")
+}
+
+concatFiles <- function (base, folder){
+   fullPath = paste(base,folder,sep="")
+   list.files(path = fullPath, full.names = TRUE, pattern = "(\\d_\\d_\\d)") %>% lapply(specialRead) %>% bind_rows
+}
+
+recode <- function(x) {
+  step_to_day <- c (
+  '00' = 'day 0 step 1',
+  '01' = 'day 0 step 2',
+  '02' = 'day 0 step 3',
+  '10' = 'day 1 step 1',
+  '11' = 'day 1 step 2',
+  '12' = 'day 1 step 3',
+  '20' = 'day 2 step 1',
+  '21' = 'day 2 step 2',
+  '22' = 'day 2 step 3',
+  '30' = 'day 3 step 1',
+  '31' = 'day 3 step 2',
+  '32' = 'day 3 step 3',
+  '40' = 'day 4 step 1',
+  '41' = 'day 4 step 2',
+  '42' = 'day 4 step 3',
+  '50' = 'day 5 step 1',
+  '51' = 'day 5 step 2',
+  '52' = 'day 5 step 3'
+  )
+  return(step_to_day[x])
+}
+```
+
+### Higher Prop
+
+```{r, fig.width=10,fig.height=10, fig.fullwidth=TRUE, out.width='100%'}
+base <- "../downloading_data"
+
+sortie_sc5_higherprop <- concatFiles(base,"/HigherProp_mars2022")
+sortie_sc5_higherprop$propHealthy <- sortie_sc5_higherprop$healthy / sortie_sc5_higherprop$effective 
+  
+sortieLong_sc5_hp <- gather(sortie_sc5_higherprop, facteur, valeur, c(propHealthy, avgOpinion) ) 
+sortieLong_sc5_hp <- mutate(sortieLong_sc5_hp, "ds" = gsub(" ", "", paste(paste("[",paste(sortieLong_sc5_hp$day, sortieLong_sc5_hp$slice)),"]"))) 
+sortieLong_sc5_hp <- mutate(sortieLong_sc5_hp, ds= recode(paste0(day, slice)))
+
+age.l <- c("15-29 yrs", "30-59 yrs", "60-75 yrs")
+names(age.l) <- c("1", "2", "3")
+
+sex.l <- c("Male", "Female")
+names(sex.l) <- c("1", "2")
+
+
+
+p1 <- ggplot(data=sortieLong_sc5_hp %>% filter(facteur=="propHealthy"), aes(x=ds, y=valeur, group=educ, fill=educ, colour=as.character(educ)))
+p1 <- p1 + scale_color_discrete(
+    name = "Education level",
+    labels = c("poor", "middle", "up") 
+  ) 
+p1 <- p1 + theme_bw() + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+p1 <- p1 + labs(title="Proportion of Healthy by age, sex and education level", y = "Value", x = "Time Slice") 
+p1 <- p1 + geom_line(size=0.5) + facet_grid( sex ~ age, labeller = labeller(sex = sex.l, age = age.l), scales = "fixed") #show.legend = FALSE
+p1 <- p1 + coord_cartesian( ylim = c(0, 0.3))  
+
+p2 <- ggplot(data=sortieLong_sc5_hp %>% filter(facteur=="avgOpinion"), aes(x=ds, y=valeur, group=educ, fill=educ, colour=as.character(educ)))
+p2 <- p2 + scale_color_discrete(
+    name = "Education level",
+    labels = c("poor", "middle", "up")
+  ) 
+p2 <- p2 + theme_bw() + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+p2 <- p2 + labs(title="Average Opinion by age, sex and education level", color = "Education level", y = "Value", x = "Time Slice") 
+p2 <- p2 + geom_line(size=0.5) + facet_grid(sex ~ age, labeller = labeller(sex = sex.l, age = age.l), scales = "fixed") #show.legend = FALSE
+p2 <- p2 + coord_cartesian( ylim = c(0.3, 0.7)) 
+
+plot_grid(
+  p1, p2,
+  labels = "AUTO", ncol = 1)
+
+ggsave("propHealtyAndOpinion_higherprop.pdf")
+```
+
+ ```{r} 
+
+ hp_sc5_health <- read_csv(paste0(base,"/HigherProp_mars2022/health.csv")) 
+ hp_sc5_health$propHealthy <- hp_sc5_health$healthy / hp_sc5_health$effective  
+
+ hpLong_sc5_health <- hp_sc5_health %>% 
+   gather(key=facteur, value=valeur, propHealthy,avgOpinion,socialInequality,e ) %>% 
+   mutate(ds= recode(paste0(day, slice))) 
+
+ hpLong_sc5_health <-  hpLong_sc5_health %>% mutate (type="hp") 
+
+ both_sc5_health <- hpLong_sc5_health %>% mutate(type = as.factor(type)) 
+ ``` 
+
+ ### Higher Prop 
+
+ ```{r, fig.width = 20, fig.height = 10, fig.fullwidth = TRUE, out.width='100%'} 
+
+ p_hp_propHealthy <- both_sc5_health %>% filter(facteur=="propHealthy")  %>% ggplot( aes(x=ds, y=valeur,colour=type) )+ 
+   theme_bw()+ 
+   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + 
+   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + 
+   geom_point() +
+   labs(y= "Value", x = "prop. of Healthy") 
+
+ #p_hp_propHealthy 
+ #ggsave("p_hp_propHealthy.pdf") 
+
+ p_hp_ineq <- both_sc5_health %>% filter(facteur=="socialInequality")  %>% ggplot( aes(x=ds, y=valeur,colour=type)) + 
+   theme_bw()+ 
+   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + 
+   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + 
+   geom_point() + 
+   labs(y= "Value", x = "Social Inequality") 
+
+ #p_hp_ineq 
+ #ggsave("p_hp_ineq.pdf") 
+
+
+ p_hp_e <- both_sc5_health %>% filter(facteur=="e")  %>% ggplot( aes(x=ds, y=valeur,colour=type)) + 
+   theme_bw()+ 
+   theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1.0)) + 
+   theme(axis.text.x.bottom = element_text(margin=margin(t=0, r=0,b=10,l=0)) ) + 
+   geom_point() +
+   labs(y= "Value", x = "Guido") 
+
+ #p_hp_e 
+ #ggsave("p_hp_e.pdf") 
+
+ p_hp_all <- plot_grid(p_hp_propHealthy, p_hp_ineq, p_hp_e, labels = "AUTO",nrow=1, align="h") 
+ p_hp_all
+ ggsave("p_hp_all.pdf",p_hp_all, width=20) 
+ ``` 
+
+
+
+
+

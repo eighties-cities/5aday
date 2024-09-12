@@ -11,7 +11,7 @@ import eighties.h24.space.generateWorld
 
 import scala.util.Random
 
-object MapPopulation extends App {
+@main def MapPopulation(args: String*): Unit = {
   val rng = new Random(42)
   val popFile = "population.bin"
   val result = "results"

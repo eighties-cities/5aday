@@ -13,7 +13,8 @@ import eighties.h24.generation.{IndividualFeature, WorldFeature}
 
 import scala.util.Random
 
-object ComputeSocialInequalityFromSyntheticPopulation extends App {
+@main def ComputeSocialInequalityFromSyntheticPopulation(args: String*): Unit = {
+  
   import HealthMatrix._
   val dataDirectory = File("data")
   val generatedData = File("../h24/results_IDF")

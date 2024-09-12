@@ -9,7 +9,7 @@ import eighties.fiveaday.health._
 
 import scala.util.Random
 
-object CellCSV extends App {
+@main def CellCSV(args: String*): Unit = {
   val rng = new Random(42)
 
   def features = WorldFeature.load(File("results/population.bin").toJava)
