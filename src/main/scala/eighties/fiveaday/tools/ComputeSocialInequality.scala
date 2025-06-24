@@ -6,7 +6,8 @@ import eighties.fiveaday.health._
 import eighties.fiveaday.observable.weightedInequality
 import eighties.h24.social._
 
-object ComputeSocialInequality extends App {
+@main def ComputeSocialInequality(args: String*): Unit = {
+  
   import HealthMatrix._
   val dataDirectory = File("data/")
   val distributionConstraints = dataDirectory / "initialisation_distribution_per_cat_2002_2008.csv"

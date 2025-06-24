@@ -101,27 +101,27 @@ object opinion {
     healthyDietReward: Double,
     random: Random): World[Individual] = {
 
-      val newIndividuals = Array.ofDim[Individual](world.individuals.length)
-      var index = 0
+    val newIndividuals = Array.ofDim[Individual](world.individuals.length)
+    var index = 0
+
+    for {
+      (c, _) <- Index.indexIndividuals(world, Individual.locationV.get).cells.flatten.zipWithIndex
+    } {
+      //if (i%1000 == 0) println(Calendar.getInstance.getTime + s" conviction in cell $i")
+      val newCell = InterchangeConviction.interchangeConvictionInCell(
+        c.toVector,
+        maxProbaToSwitch,
+        constraintsStrength,
+        inertiaCoefficient,
+        healthyDietReward,
+        random)
 
       for {
-        (c, _) <- Index.indexIndividuals(world, Individual.locationV.get).cells.flatten.zipWithIndex
+        individual <- newCell
       } {
-        //if (i%1000 == 0) println(Calendar.getInstance.getTime + s" conviction in cell $i")
-        val newCell = InterchangeConviction.interchangeConvictionInCell(
-          c.toVector,
-          maxProbaToSwitch,
-          constraintsStrength,
-          inertiaCoefficient,
-          healthyDietReward,
-          random)
-
-        for {
-          individual <- newCell
-        } {
-          newIndividuals(index) = individual
-          index += 1
-        }
+        newIndividuals(index) = individual
+        index += 1
+      }
     }
 
     Focus[World[Individual]](_.individuals).set(newIndividuals)(world)

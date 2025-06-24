@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+  openmole:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openmole:latest
+    environment:
+      - MEM=4G
+    ports:
+      - target: 8443
+        published: 8081
+    volumes:
+      - type: bind
+        source: $PWD/../../scripts/workflows_openmole
+        target: /home/mole/workspace
+    privileged: true
+
+

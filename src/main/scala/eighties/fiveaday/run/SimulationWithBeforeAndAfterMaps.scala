@@ -51,12 +51,12 @@ object SimulationWithBeforeAndAfterMaps {
     var geopkg: GeoPackage = null
     val geometryFactory = new GeometryFactory
     def visit(world: World[Individual], obb: BoundingBox, gridSize: Int, option: Option[(Int, Int)]): Unit = {
-      def createEntry(featureTypeName: String, world1: World[Individual], world2: Option[World[Individual]]): Unit = {
+      def createEntry(featureTypeName: String, world1: World[Individual], world2: Option[World[Individual]], home: Boolean = false): Unit = {
         def aggregator: Array[Double] => Double = v => v.sum / v.length
         def getValue(individual: Individual) = if (individual.healthy) 1.0 else 0.0
-        def mapIndex(index: Index[Individual]) = index.cells.map(_.map(individuals => if (individuals.nonEmpty) Some(aggregator(individuals.map(getValue))) else None))
+        def mapIndex(index: Index[Individual]) = index.cells.map(_.map(individuals => if (individuals.nonEmpty) Some((aggregator(individuals.map(getValue)), individuals.size, individuals.filter(_.healthy).size, individuals.filterNot(_.healthy).size)) else None))
         val entry = new FeatureEntry
-        val specs = "geom:Polygon:srid=3035, propHealthy:Double"
+        val specs = "geom:Polygon:srid=3035, propHealthy:Double, num:Integer, numHealthy:Integer, numUnhealthy:Integer"
         val featureType = DataUtilities.createType(featureTypeName, specs)
         entry.setGeometryColumn (featureType.getGeometryDescriptor.getLocalName)
         val geometryType = featureType.getGeometryDescriptor.getType
@@ -71,15 +71,15 @@ object SimulationWithBeforeAndAfterMaps {
         log("create writer")
         val writer = geopkg.writer(entry,true, null, transaction)
         log(s"Let's go (${world1.sideI} - ${world1.sideJ})")
-        val index1 = space.Index.indexIndividuals(world1, Individual.homeV.get)
+        val index1 = space.Index.indexIndividuals(world1, if home then Individual.homeV.get else Individual.locationV.get)
         val mappedValues = if (world2.isDefined) {
-          val index2 = space.Index.indexIndividuals(world2.get, Individual.homeV.get)
+          val index2 = space.Index.indexIndividuals(world2.get, if home then Individual.homeV.get else Individual.locationV.get)
           val mappedValues1 = mapIndex(index1)
           val mappedValues2 = mapIndex(index2)
           mappedValues1.zipWithIndex.map {
             case (array1, ind1) => array1.zipWithIndex.map {
               case (array2, ind2) => (array2, mappedValues2(ind1)(ind2)) match {
-                case (Some(v1), Some(v2)) => Some(v2 - v1)
+                case (Some(v1), Some(v2)) => Some(v2._1-v1._1, v2._2-v1._2, v2._3-v1._3, v2._4-v1._4)
                 case _ => None
               }
             }
@@ -99,7 +99,10 @@ object SimulationWithBeforeAndAfterMaps {
           def polygon = geometryFactory.createPolygon(Array(p0,p1,p2,p3,p0))
           val values = Array[AnyRef](
             polygon,
-            value.asInstanceOf[AnyRef]
+            value._1.asInstanceOf[AnyRef],
+            value._2.asInstanceOf[AnyRef],
+            value._3.asInstanceOf[AnyRef],
+            value._4.asInstanceOf[AnyRef]
           )
           def simpleFeature = writer.next
           simpleFeature.setAttributes(values)
@@ -114,14 +117,18 @@ object SimulationWithBeforeAndAfterMaps {
       }
       option match {
         case Some((day, slice)) =>
-          if (day == days-1 && slice == 2) {
+          if (day == 0 && exportData) {
+            createEntry(s"Initial_$slice", world, None)
+          } else if (day == days-1) {
             // the last simulation
             if (exportData) {
-              createEntry("Final", world, None)
-              createEntry("Diff", initWorld, Some(world))
-              log("close geopackage")
-              geopkg.close()
-            } else {
+              createEntry(s"Final_$slice", world, None)
+//              createEntry("Diff", initWorld, Some(world))
+              if (slice == 2)
+                createEntry(s"Final", world, None, true)
+                log("close geopackage")
+                geopkg.close()
+            } else if (slice == 2) {
               def soc = observable.weightedInequalityRatioBySexAge(world)
               def initSoc = observable.weightedInequalityRatioBySexAge(initWorld)
               util.mapHealth(world, obb, world.sideI, world.sideJ, outputPath.toScala / "home" / "1_end.tiff", soc.toString, "", maxValue = 0.5, fraction = 5)
@@ -141,7 +148,7 @@ object SimulationWithBeforeAndAfterMaps {
             log("init geopackage")
             geopkg.init()
             // create the first entry
-            createEntry("Initial", world, None)
+//            createEntry("Initial", world, None)
           } else {
             def soc = observable.weightedInequalityRatioBySexAge(world)
             log(s"delta health: ${observable.deltaHealthByCategory(world, distributionConstraints)}")
@@ -165,8 +172,8 @@ object SimulationWithBeforeAndAfterMaps {
     )
   }
 }
-object SimulationWithBeforeAndAfterMapsApp extends App {
 
+@main def SimulationWithBeforeAndAfterMapsApp(args: String*): Unit = {
   case class Config(
     population: Option[File] = None,
     randomPopulation: Option[File] = None,
@@ -221,18 +228,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
         val rng = new Random(seed)
         val moves = config.moves.get
         val distributionConstraints = config.distribution.get
-        val parameterMap = Map(
-          ("environment", (0.08433503404492204, 0.14985650295919095, 0.7333227248982435, 0.03291749337039018, 0.23398559843386524)),
-          ("partner", (0.029443016524418164, 0.05415637081735669, 0.20870694702023695, 0.10353942953774942, 0.7233067964061539)),
-          ("aout", (1.0, 0.894687222564233, 0.0, 1.0, 0.985952008896386)),
-          ("calibration", (0.9999372894598938, 3.780104482210688E-5, 0.1391139744735069, 0.10973200449784659, 0.9011227599761806)),
-          ("calibration_fitness", (0.8507843893208267, 0.45377746673575825, 0.6585498777924014, 0.210784861364803, 0.2589547233574915)),
-          ("ose", (1.0, 0.12454546, 0.66766742, 0.26597869, 0.24032422)),
-          ("duo_0703", (0.996, 0.405, 0.787, 0.161, 0.102)),
-          ("summer2020", (0.010216504, 0.0, 0.806896825, 0.767755389, 0.790965130)),
-          ("hope2020", (0.02571037, 0.00878027, 0.55859533, 0.72271431, 0.6156984)),
-          ("valentine2021",(1.0, 0.209712299284924, 0.80338439724895, 0.190788311771708, 0.0166381262141282))
-        )
+        val parameterMap = util.getParameterMap
         val scenarioMap = Map(
           (1, (RandomPop, MoveType.No)),
           (2, (RandomPop, MoveType.Random)),
@@ -280,7 +276,7 @@ object SimulationWithBeforeAndAfterMapsApp extends App {
           config.exportData
         )
       }
-      val parameterName = "valentine2021"
+      val parameterName = "HigherProp"
       val seed = config.seed.getOrElse(42L)
       if (config.scenario.isDefined) run(config.scenario.get, parameterName, seed)
       else {

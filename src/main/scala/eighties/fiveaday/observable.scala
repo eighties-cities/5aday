@@ -394,6 +394,6 @@ object observable {
   }
 }
 
-object test extends App {
+@main def test(args: String*): Unit = {
   println(observable.erreygersE_(new observable.HealthCategories(5,5,5,0,5,0), 15))
 }
