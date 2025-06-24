@@ -5,9 +5,7 @@ name := "5aday"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "3.1.0"
-
-crossScalaVersions := Seq("3.1.0")
+scalaVersion := "3.7.0"
 
 //val monocleVersion = "3.0.1"
 
@@ -27,8 +25,8 @@ libraryDependencies ++= Seq (
   "org.apache.commons" % "commons-compress" % "1.11",
   "org.apache.commons" % "commons-math3" % "3.6.1",
   "org.tukaani" % "xz" % "1.6",
-  "joda-time" % "joda-time" % "2.9.7",
-  "javax.media" % "jai-core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+  "joda-time" % "joda-time" % "2.9.7"
+//  "javax.media" % "jai-core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
 )
  
 excludeDependencies += ExclusionRule("org.typelevel", "cats-kernel_2.13")
